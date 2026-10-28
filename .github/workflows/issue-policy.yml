@@ -14,6 +14,8 @@ permissions:
 jobs:
   policy:
     name: Issue policy
+    # This organization Project and GitHub App belong to upstream, not to the I/O fork.
+    if: ${{ github.repository == 'deepseek-ai/deepseek-harness' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out trusted policy

@@ -19,7 +19,7 @@ This reference defines I/O Harness (I/O H), the Indus Orbit fork of DeepSeek Har
 
 The upstream base is [dsh-v0.2.1-rc.3](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.3), fetched on 27 October 2026. This is an upstream release candidate with local fork changes. The previous rc.2 checkout and its dirty files remain preserved separately; it is not the active Harness source.
 
-The `indus-orbit` client build uses the approved pixel `io` raster master, a dominant H wordmark, the Harness expansion and Indus Orbit Foundation identity. The master keeps its exact pixels and background. The [brand occupant package](../packages/client/ui-brand-official/README.md) fills the sidebar and conversation hero through existing slots. Session handling, tools, plugins and the agent loop keep the upstream architecture.
+The `indus-orbit` client build uses the uppercase pixel I/O mark, a dominant H wordmark, the Harness expansion and Indus Orbit Foundation identity. Owned raster marks are rendered from the vector geometry. The [brand occupant package](../packages/client/ui-brand-official/README.md) fills the sidebar and conversation hero through existing slots. Session handling, tools, plugins and the agent loop keep the upstream architecture.
 
 <a id="local-build"></a>
 ## Local build
@@ -38,7 +38,13 @@ The native `indus-orbit` profile requires its own Indus Orbit OAuth identity bef
 
 The named `indus-orbit` profile embeds public client ID `cf26c996-8c19-42c6-82ff-f0b6ccafd3ee` and callback port `43189`; inherited public variables cannot retarget it. These values are not secrets. The website must deploy the matching consent page and ID. Database, Storage, Realtime and I/O function restrictions must reject identity-only OAuth tokens before activation. Genuine hosted sign-in, refresh and revocation require separate acceptance.
 
-A final trusted Desktop Host overlay disables upstream DeepSeek account/key adapters, upstream account settings, product analytics and session telemetry for this profile. The upstream `official` profile retains its own behavior. The I/O API model adapter is not implemented; signing in alone does not make model execution available.
+The trusted Desktop Host overlay disables the upstream DeepSeek account, its account settings, product analytics and session telemetry. The optional direct-key DeepSeek adapter and pi-ai provider connections remain available separately. The upstream `official` profile retains its own behavior.
+
+The owned I/O provider uses a main-process loopback broker. OAuth access and refresh credentials stay in main; the Host receives a random in-memory socket capability through private IPC, never through environment variables, arguments, renderer state or profile configuration. Browser origins and unlisted routes are refused. The broker bounds bytes, concurrency and duration, preserves JSON/SSE bytes, generates a unique paid-attempt ID and aborts on sign-out or Host shutdown. The maintained pi-ai OpenAI adapter handles streaming, tool history and usage; automatic retries are disabled for this funded route.
+
+New defaults select `indus-orbit` / `io/harness-primary` before user patches, preserving explicit saved choices and existing sessions. Reviewed gateway metadata supplies capacities and the exact primary or owner-approved temporary alias; other model families are never a silent fallback. Use **Connect I/O credits…** in the application menu for separate first-party funding approval. The matched website/backend and eligible provider route must be deployed before genuine funded execution can pass; identity sign-in alone is insufficient.
+
+Native model transport and supplier checks are recorded separately in the [I/O model verification receipt](indus-orbit-model-verification-2026-10-28.json). A successful direct-supplier test does not establish a genuine hosted workspace-credit grant or a public installer.
 
 The fork permits unsigned local packaging only. Its updater rejects upstream feed and upload resolution, its installed updater is disabled, and its mandatory-update service is disabled. Signing credentials, accounts and publication destinations need a separately reviewed fork release configuration. The [verification record](indus-orbit-workstation-verification-2026-10-27.json) states the actual commands, outcomes and remaining limits; it is the authority for whether an installer has been produced or tested.
 

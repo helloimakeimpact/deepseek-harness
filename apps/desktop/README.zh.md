@@ -30,7 +30,7 @@ Desktop 在原生应用中运行 Harness 工作区。本参考文档说明应用
 
 ## 应用概览
 
-`indus-orbit` 构建选择 I/O Harness 预览身份。其原生文件名为 `IO Harness`，协议为 `io-ws`，本地预览标识符为 `local.indusorbit.workstation.preview`。旧 `IO W-S` Electron 数据目录及独立持久 Harness 主目录保持稳定，避免品牌更名影响本地数据。打包预览在 Host 启动前要求 Indus Orbit 身份，并禁用上游账户和提供方适配器；配置详见预览参考。显式设置 `DSH_HOME` 可覆盖 Harness 主目录。签名打包、上游更新源及上传均被拒绝；参见[分支预览参考](../../docs/indus-orbit-terminal-preview.zh.md)。本参考其余内容描述上游 `official` 配置。
+`indus-orbit` 构建选择 I/O Harness 预览身份。其原生文件名为 `IO Harness`，协议为 `io-ws`，本地预览标识符为 `local.indusorbit.workstation.preview`。旧 `IO W-S` Electron 数据目录及独立持久 Harness 主目录保持稳定，避免品牌更名影响本地数据。打包预览在 Host 启动前要求 Indus Orbit 身份，并禁用上游账户身份，同时保留显式的直接密钥与 pi-ai 提供方选择。自有 I/O 提供方通过私有主进程代理及独立的工作区额度授权连接；配置详见预览参考。显式设置 `DSH_HOME` 可覆盖 Harness 主目录。签名打包、上游更新源及上传均被拒绝；参见[分支预览参考](../../docs/indus-orbit-terminal-preview.zh.md)。本参考其余内容描述上游 `official` 配置。
 
 桌面埋点遵循[产品采集策略](../../packages/client/product-analytics/README.zh.md)及其动态应用配置，不包含 Web 使用情况。安装更新会等待该操作的本地埋点接收请求结束，再锁定 API 准入并停止 Host。接收请求的时限为一秒，失败不会阻止安装，也不等待收集端完成发送。
 

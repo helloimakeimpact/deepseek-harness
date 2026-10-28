@@ -62,6 +62,7 @@ import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
 import { requireIndusIdentity, indusAuthCopy } from './indus-auth-window.ts'
+import { IndusModelBroker } from './indus-model-broker.ts'
 import { desktopProduct } from './product.ts'
 
 const product = desktopProduct()
@@ -456,6 +457,10 @@ async function main(): Promise<void> {
   const platformView = new DesktopPlatformView(join(app.getAppPath(), 'lib', 'preload-platform-account.cjs'),
     () => locale.id === 'zh-CN' ? 'zh_CN' : 'en_US', process.platform === 'win32' ? 'win32' : 'darwin')
   const backend = new DesktopBackendController((onFailure) => {
+    const modelBroker = indusIdentity === undefined ? undefined : new IndusModelBroker(
+      (path, body, signal, requestId) => indusIdentity.fetchModel(path, body, signal, requestId),
+      { requestBytes: 1024 * 1024, responseBytes: 16 * 1024 * 1024, concurrentRequests: 4, requestTimeoutMs: 180_000 },
+    )
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
       hostInspectPort, {
@@ -464,7 +469,8 @@ async function main(): Promise<void> {
         DSH_CLIENT_BUILD_PROFILE: process.env.DSH_CLIENT_BUILD_PROFILE,
       }, onFailure,
       primaryRuntime,
-      resources, (next) => { platformView.setSession(next) })
+      resources, (next) => { platformView.setSession(next) },
+      modelBroker === undefined ? undefined : () => modelBroker.start())
     return {
       start: async () => {
         if (indusIdentity !== undefined && indusIdentity.state !== 'signed-in') throw new Error('Indus Orbit sign-in is required')
@@ -519,11 +525,14 @@ async function main(): Promise<void> {
       stop: async () => {
         analyticsEnabled = false
         stopAccount?.()
-        try { await host.stop(requireCleanStop) }
-        catch (error) {
-          if (!requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
-          // Backend cleanup succeeded; installation still rejects the unsuccessful task teardown.
-          updateStopFailure = error
+        try { await modelBroker?.close() }
+        finally {
+          try { await host.stop(requireCleanStop) }
+          catch (error) {
+            if (!requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
+            // Backend cleanup succeeded; installation still rejects the unsuccessful task teardown.
+            updateStopFailure = error
+          }
         }
       },
       updateTasks: (action: 'inspect' | 'lock' | 'unlock') => host.updateTasks(action),
@@ -673,6 +682,7 @@ async function main(): Promise<void> {
     // A confirmation on a hidden window would go unseen, so it waits for the next show; the mandatory
     // flow keeps its own taskbar and Dock attention instead.
     if (!isMandatory()) await windowShown()
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Quitting can change while the window is hidden.
     if (quitting) return state
     return updates.install(version)
   }
@@ -978,6 +988,7 @@ async function main(): Promise<void> {
       { role: 'unhide', label: currentDesktopLocale().messages.showAllApplications }, { type: 'separator' }]
     : []
   const applicationItems = (): MenuItemConstructorOptions[] => [
+    ...indusIdentity === undefined ? [] : [{ label: indusAuthCopy(app.getLocale()).credits, click: () => { void shell.openExternal('https://indusorbit.com/io?view=overview').catch((error: unknown) => { reportFatal(error, 'main') }) } }],
     ...indusIdentity === undefined ? [] : [{ label: indusAuthCopy(app.getLocale()).signOut, click: () => { void indusIdentity.signOut().catch((error: unknown) => { reportFatal(error, 'main') }) } }],
     // Windows has no system About panel; Electron's fallback is a plain
     // message box, so the shell shows its own dimmed dialog instead.

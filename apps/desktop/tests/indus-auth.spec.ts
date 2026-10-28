@@ -33,6 +33,43 @@ function fixture(fetcher = vi.fn<typeof fetch>(), callbackPort = 43189) {
   return { auth, store, changed, lost, open, fetcher }
 }
 describe('Indus Orbit native identity', () => {
+  it('refuses model access after the token lease expires before a delayed refresh runs', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1000)
+    onTestFinished(() => { clock.mockRestore() })
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ ...token, expires_in: 60 }))
+      .mockResolvedValueOnce(Response.json({ sub: userId, email: 'member@example.test', email_verified: true }))
+    const f = fixture(fetcher)
+    f.store.read.mockResolvedValue('old-refresh')
+    await f.auth.restore()
+    clock.mockReturnValue(61_001)
+    await expect(f.auth.fetchModel('/v1/models', undefined, new AbortController().signal)).rejects.toThrow('sign-in')
+    expect(fetcher).toHaveBeenCalledTimes(2)
+  })
+  it('keeps model bearer credentials in main and pins method, endpoint and attempt identity', async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json(token))
+      .mockResolvedValueOnce(Response.json({ sub: userId, email: 'member@example.test', email_verified: true }))
+      .mockResolvedValueOnce(Response.json({ object: 'list', data: [] }))
+      .mockResolvedValueOnce(Response.json({ choices: [] }))
+    const f = fixture(fetcher)
+    f.store.read.mockResolvedValue('old-refresh')
+    const signal = new AbortController().signal
+    await expect(f.auth.fetchModel('/v1/models', undefined, signal)).rejects.toThrow('sign-in')
+    await f.auth.restore()
+    await f.auth.fetchModel('/v1/models', undefined, signal)
+    const body = '{ "model": "io/harness-primary", "messages": [] }'
+    await f.auth.fetchModel('/v1/chat/completions', body, signal, 'unique_attempt_00001')
+    expect(fetcher.mock.calls[2]?.[0]).toBe('https://jpwvgpnbkrktipwhvqss.supabase.co/functions/v1/io-harness/v1/models')
+    expect(fetcher.mock.calls[3]?.[1]).toMatchObject({ method: 'POST', body, redirect: 'error', credentials: 'omit', headers: { authorization: 'Bearer private-access', 'Idempotency-Key': 'unique_attempt_00001' } })
+    expect(JSON.stringify(f.auth.identity)).not.toContain('private-access')
+    await expect(f.auth.fetchModel('/v1/chat/completions', body, signal)).rejects.toThrow('attempt id')
+    const modelSignal = fetcher.mock.calls[3]?.[1]?.signal
+    await f.auth.signOut()
+    expect(modelSignal?.aborted).toBe(true)
+    await expect(f.auth.fetchModel('/v1/models', undefined, signal)).rejects.toThrow('sign-in')
+    expect(fetcher).toHaveBeenCalledTimes(4)
+  })
   it('never substitutes a provider account when native configuration is missing', async () => {
     const f = fixture()
     const auth = new IndusAuth({

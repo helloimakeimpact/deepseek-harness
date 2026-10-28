@@ -4,6 +4,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { join } from 'node:path'
 import type { PlatformSession } from '@deepseek-ai/dsh-deepseek-account'
 import { desktopNodeEnvironment } from './node-environment.ts'
+import type { IndusModelConnection } from './indus-model-broker.ts'
 
 interface ReadyEvent {
   readonly type: 'ready'
@@ -23,7 +24,7 @@ interface PlatformSessionEvent {
   readonly session: PlatformSession | null
 }
 
-type DesktopHostEvent = ReadyEvent | FatalEvent | PlatformSessionEvent | { readonly type: 'shutdown-complete' } | {
+type DesktopHostEvent = ReadyEvent | FatalEvent | PlatformSessionEvent | { readonly type: 'indus-model-request' } | { readonly type: 'shutdown-complete' } | {
   readonly type: 'update-tasks'
   readonly requestId: number
   readonly active: boolean
@@ -54,6 +55,8 @@ function isDesktopHostEvent(message: unknown): message is DesktopHostEvent {
   if (typeof message !== 'object' || message === null || !('type' in message)) return false
   const candidate = message as Record<string, unknown>
   switch (candidate.type) {
+    case 'indus-model-request':
+      return Object.keys(candidate).length === 1
     case 'shutdown-complete':
       return true
     case 'ready':
@@ -165,6 +168,7 @@ export class DesktopHostProcess {
    *   `office-skills` resources fail Host startup.
    * @param packageManager - Bundled pnpm entry and Node launcher directory, scoped to package operations.
    * @param onPlatformSession - Private credential updates for embedded Platform views.
+   * @param modelConnection - Private I/O socket for the Host; omission rejects I/O requests from upstream Hosts.
    */
   constructor(
     private readonly node: string,
@@ -177,6 +181,7 @@ export class DesktopHostProcess {
     private readonly packageManager?: { readonly pnpm: string; readonly nodeBin: string },
 
     private readonly onPlatformSession?: (session: PlatformSession | null) => void,
+    private readonly modelConnection?: () => Promise<IndusModelConnection>,
   ) {}
 
   /**
@@ -210,6 +215,19 @@ export class DesktopHostProcess {
         return
       }
       if (message.type === 'ready') this.readyResolve({ url: message.url, injections: message.injections })
+      else if (message.type === 'indus-model-request') {
+        if (this.modelConnection === undefined) {
+          this.fail(new Error('Unexpected I/O model connection request'))
+          child.kill('SIGTERM')
+          return
+        }
+        void this.modelConnection().then((connection) => {
+          if (!this.stopping && child.connected) child.send({ type: 'indus-model-connection', connection }, (error) => { if (error !== null) this.fail(error) })
+        }).catch((_modelConnectionFailed: unknown) => {
+          this.fail(new Error('I/O model connection could not start'))
+          child.kill('SIGTERM')
+        })
+      }
       else if (message.type === 'platform-session') this.onPlatformSession?.(message.session)
       else if (message.type === 'shutdown-complete') {
         if (this.stopping) this.shutdownCompleted = true

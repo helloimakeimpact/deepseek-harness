@@ -32,6 +32,8 @@ env:
 
 jobs:
   preview:
+    # The upstream Pages account/project is not an Indus Orbit publication destination.
+    if: ${{ github.repository == 'deepseek-ai/deepseek-harness' }}
     runs-on: ubuntu-24.04
     name: cloudflare pages preview
     steps:

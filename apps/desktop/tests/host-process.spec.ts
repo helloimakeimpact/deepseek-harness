@@ -73,6 +73,39 @@ afterEach(async () => {
 })
 
 describe('desktop host process', () => {
+  it('delivers an I/O socket capability over private IPC without adding it to the child environment', async () => {
+    const capability = 's'.repeat(43)
+    const runtime = projectWithHost(`
+      process.on('message', message => {
+        if (message.type === 'indus-model-connection') {
+          const secret = message.connection.capability
+          const leaked = Object.values(process.env).some(value => value.includes(secret))
+            || process.argv.some(value => value.includes(secret))
+          process.send({ type: 'ready', url: 'http://127.0.0.1:3080/', injections: [{ connected: secret.length === 43, leaked }] })
+        }
+        if (message.type === 'shutdown') {
+          process.send({ type: 'shutdown-complete' }, () => process.disconnect())
+        }
+      })
+      process.send({ type: 'indus-model-request' })
+    `)
+    const host = new DesktopHostProcess(
+      process.execPath, runtime, runtime, undefined, process.env, undefined, undefined, undefined, undefined,
+      async () => ({ baseURL: 'http://127.0.0.1:12345/v1', capability }),
+    )
+    hosts.push(host)
+    const ready = await host.start()
+    expect(ready.injections).toEqual([{ connected: true, leaked: false }])
+    expect(JSON.stringify(ready)).not.toContain(capability)
+    await host.stop(true)
+  })
+
+  it('refuses an I/O handshake from a Host without an owned connection', async () => {
+    const host = hostProcess(projectWithHost("process.send({ type: 'indus-model-request' })"))
+    await expect(host.start()).rejects.toThrow('Unexpected I/O model connection request')
+    await host.stop()
+  })
+
   it('correlates task inspections and admission changes over private IPC', async () => {
     const host = hostProcess(projectWithHost())
     await expect(host.updateTasks('inspect')).rejects.toThrow('Host is unavailable')

@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-28",
+  "implementationState": "Verified",
+  "productionState": "Partial",
+  "scope": "Native I/O model source, private broker, explicit funding integration and alternative-provider regressions. Hosted credit execution and public distribution remain separate.",
+  "nativeHostProtocol": 5,
+  "build": {
+    "profile": "indus-orbit",
+    "passed": 9,
+    "failed": 0,
+    "artifacts": 335,
+    "publicValues": 6,
+    "durationSeconds": 37.9
+  },
+  "focusedTests": {
+    "passed": 79,
+    "manualLiveSkipped": 1,
+    "filesPassed": 9,
+    "method": "Complete focused native/identity/broker/Loader/Host/legacy-provider run; the concurrency regression was repeated after a type-only deferred-value lint repair."
+  },
+  "wireSnapshot": "../apps/desktop-host/tests/expected/indus-model-wire.json",
+  "documentation": {
+    "aggregatePassed": 42,
+    "aggregateFailed": 1,
+    "repairedCheck": "Package README Summaries now passes for 396 English summaries after moving API details to Use this package. Both languages and pairing receipts are aligned.",
+    "changedPairsVerified": 3
+  },
+  "liveTelnyx": {
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+    "finalSequentialSmoke": "passed",
+    "calls": 2,
+    "textInputTokens": 11,
+    "textOutputTokens": 2,
+    "toolInputTokens": 273,
+    "toolOutputTokens": 37,
+    "estimatedInvocationCeilingUsd": 0.01,
+    "invoiceCostVerified": false,
+    "gatewayMetadata": "synthetic; this does not establish a hosted I/O credit grant",
+    "rawCredentialsOrGeneratedOutputRetained": false,
+    "earlierAttempts": "The initial sequence passed text but failed its tool case before upstream dispatch; a separate 32-token tool call truncated. The final 256-token tool ceiling and production concurrency pass standalone and sequential text/tool qualification."
+  },
+  "security": {
+    "oauthCredentialsStayInMain": true,
+    "hostCapabilityNotInEnvironmentArgvRendererOrProfile": true,
+    "privateLoopbackOnly": true,
+    "boundedBytesConcurrencyAndDuration": true,
+    "signoutAndDisposalAbort": true,
+    "automaticPaidRetries": false,
+    "rawProviderCredentialsInProduct": false,
+    "originalUpstreamAccountStateTouched": false
+  },
+  "releaseHolds": [
+    "No matched hosted credit/model rollout yet",
+    "No genuine workspace approval, expiry/revocation or invoice qualification yet",
+    "No public installer or owned update release",
+    "Browser execution and real pairing remain unfinished",
+    "Upstream organization/preview workflows are scoped to upstream; full fork CI remains a distinct receipt"
+  ]
+}

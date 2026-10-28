@@ -10,6 +10,7 @@ import { IndusAuth, indusAuthConfig, type IndusTokenStore } from './indus-auth.t
 export function indusAuthCopy(language: string) {
   const en = {
     title: 'I/O Harness — Indus Orbit',
+    credits: 'Connect I/O credits…',
     brand: 'I/O H',
     expansion: 'I/O Harness',
     line: 'Intelligence, built together.',
@@ -28,6 +29,7 @@ export function indusAuthCopy(language: string) {
     ? {
       ...en,
       intro: '使用您的 Indus Orbit 账号登录。',
+      credits: '连接 I/O 额度…',
       start: '使用 Indus Orbit 登录',
       cancel: '取消登录',
       signOut: '退出 Indus Orbit',

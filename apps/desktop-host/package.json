@@ -26,7 +26,9 @@
     "@deepseek-ai/dsh-tool-workspace-dependencies": "workspace:*",
     "@deepseek-ai/dsh-skill-office": "workspace:*",
     "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-workspace": "workspace:*"
+    "@deepseek-ai/dsh-workspace": "workspace:*",
+    "@deepseek-ai/dsh-llm": "workspace:*",
+    "@deepseek-ai/dsh-llm-pi-ai": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:~",

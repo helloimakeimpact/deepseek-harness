@@ -3,6 +3,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer, type Server } from 'node:http'
 
 const ISSUER = 'https://jpwvgpnbkrktipwhvqss.supabase.co/auth/v1'
+const MODEL_ENDPOINT = 'https://jpwvgpnbkrktipwhvqss.supabase.co/functions/v1/io-harness'
 const MAX_RESPONSE = 64 * 1024
 const ATTEMPT_MS = 5 * 60 * 1000
 
@@ -82,6 +83,8 @@ export class IndusAuth {
   #state: IndusAuthState
   #identity: IndusIdentity | undefined
   #refreshToken: string | undefined
+  #accessToken: string | undefined
+  #accessExpiresAt = 0
   #server: Server | undefined
   #timer: ReturnType<typeof setTimeout> | undefined
   #refreshTimer: ReturnType<typeof setTimeout> | undefined
@@ -169,6 +172,7 @@ export class IndusAuth {
     return value as Record<string, unknown>
   }
   async #tokens(body: URLSearchParams, generation: number, expectedUser?: string): Promise<void> {
+    const requestedAt = Date.now()
     const token = await this.#json('/oauth/token', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -209,6 +213,8 @@ export class IndusAuth {
     await write
     if (!this.#isCurrent(generation)) return
     this.#refreshToken = token.refresh_token
+    this.#accessToken = token.access_token
+    this.#accessExpiresAt = requestedAt + token.expires_in * 1000
     this.#identity = Object.freeze({ id: user.sub, email: user.email })
     this.#set('signed-in')
     clearTimeout(this.#refreshTimer)
@@ -216,7 +222,7 @@ export class IndusAuth {
       () => {
         void this.#refresh()
       },
-      (token.expires_in - 45) * 1000,
+      Math.max(0, this.#accessExpiresAt - Date.now() - 45_000),
     )
     this.#refreshTimer.unref()
   }
@@ -363,12 +369,42 @@ export class IndusAuth {
     if (this.#state !== 'signed-in') this.#set(this.#config === undefined ? 'unconfigured' : 'signed-out')
     await this.#exchange
   }
+  /**
+   * Send one native model operation using the main-process identity only.
+   * @param path - Allowlisted wire operation under the pinned I/O service.
+   * @param body - Serialized chat request, or undefined for model discovery.
+   * @param signal - Caller cancellation; sign-out/disposal also aborts the request and response stream.
+   * @param requestId - Unique paid-attempt id; absent for discovery.
+   * @returns The gateway response without exposing a bearer credential to its caller.
+   */
+  async fetchModel(path: '/v1/models' | '/v1/chat/completions', body: string | undefined, signal: AbortSignal, requestId?: string): Promise<Response> {
+    const token = this.#accessToken
+    if (this.#disposed || this.#state !== 'signed-in' || token === undefined || Date.now() >= this.#accessExpiresAt)
+      throw new Error('Indus Orbit sign-in is required')
+    if ((path === '/v1/models') !== (body === undefined)) throw new Error('Invalid I/O model operation')
+    const headers: Record<string, string> = { authorization: `Bearer ${token}` }
+    if (body !== undefined) {
+      if (requestId === undefined || !/^[A-Za-z0-9_-]{16,80}$/u.test(requestId))
+        throw new Error('I/O model request requires a unique attempt id')
+      headers['content-type'] = 'application/json'
+      headers['Idempotency-Key'] = requestId
+    }
+    return this.#fetch(`${MODEL_ENDPOINT}${path}`, {
+      method: body === undefined ? 'GET' : 'POST',
+      headers,
+      ...body === undefined ? {} : { body },
+      redirect: 'error', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer',
+      signal: AbortSignal.any([signal, this.#request.signal]),
+    })
+  }
   /** Clears this device's identity and closes its work; other devices' grants remain unchanged. */
   async signOut(): Promise<void> {
     const hadIdentity = this.#identity !== undefined
     this.#stopAttempt()
     clearTimeout(this.#refreshTimer)
     this.#refreshToken = undefined
+    this.#accessToken = undefined
+    this.#accessExpiresAt = 0
     this.#identity = undefined
     const clear = this.#storageQueue.then(() => this.#store.clear())
     this.#storageQueue = clear.catch((_clearFailed: unknown) => undefined)
@@ -387,5 +423,7 @@ export class IndusAuth {
     this.#stopAttempt()
     clearTimeout(this.#refreshTimer)
     this.#refreshToken = undefined
+    this.#accessToken = undefined
+    this.#accessExpiresAt = 0
   }
 }
