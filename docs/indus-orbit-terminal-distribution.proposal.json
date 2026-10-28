@@ -15,8 +15,9 @@
   "source": {
     "forkRepository": "https://github.com/helloimakeimpact/deepseek-harness",
     "forkRevision": null,
-    "workingTreeChanges": true,
-    "patchSha256": null
+    "workingTreeChanges": false,
+    "patchSha256": null,
+    "forkRevisionStatus": "Artifact release revision is unset; published source review is linked separately"
   },
   "brandMaster": {
     "path": "packages/client/ui-brand-official/src/client/indus-orbit-mark.png",
@@ -44,7 +45,7 @@
     "Signing/notarization where required",
     "Versioned HTTPS artifact publication",
     "Preserved MIT and third-party notices",
-    "Owned I/O API model adapter, native identity acceptance and matched consent deployment"
+    "Owned I/O API model adapter and complete identity expiry/revocation/platform acceptance"
   ],
   "websiteDownloadEnabled": false,
   "productExpansion": "Harness",
@@ -60,5 +61,6 @@
     "signedPackagingAllowed": false,
     "legacyUserDataDirectory": "IO W-S"
   },
-  "identity": "Live public registration and isolated native sign-in screen verified; deployed consent and genuine account/refresh/revocation acceptance pending"
+  "identity": "Public registration, live own-account consent, genuine initial desktop login and restart refresh restoration verified; long-lived expiry/device revocation remains",
+  "sourceReview": "https://github.com/helloimakeimpact/deepseek-harness/pull/1"
 }

@@ -33,8 +33,11 @@
     "discoveryVerified": true,
     "signedOutAuthorizationRedirectVerified": true,
     "nativeSignInScreenVerified": true,
-    "genuineUserSignInVerified": false,
-    "refreshRevocationAccepted": false
+    "genuineUserSignInVerified": true,
+    "refreshRevocationAccepted": false,
+    "nativeToLiveIndusConsentVerified": true,
+    "restartRefreshRestorationVerified": true,
+    "acceptanceScope": "Owner completed actual Indus Orbit account sign-in and consent; desktop entered its own main UI. App/Host restart restored the session without another browser sign-in. Expiry/device-revocation acceptance remains."
   },
   "results": [
     {
@@ -100,7 +103,7 @@
     "reason": "Earlier W-S build uses inherited upstream login; not the current own-identity Harness release"
   },
   "limits": [
-    "Matching website consent deployment and genuine account/refresh/revocation acceptance remain",
+    "Genuine initial login and restart refresh restoration pass; long-lived expiry, account/device revocation and platform acceptance remain",
     "Owned I/O API model adapter and secure key connection are not implemented; own identity does not supply model execution",
     "No current signed/notarized installer, public artifact, owned updater or cross-platform installation/upgrade qualification",
     "No model/provider invocation, old credential inspection/migration/deletion or paid API test"
@@ -109,5 +112,17 @@
     "directory": "../io-ws-preservation-2026-10-27",
     "files": 47,
     "patchSha256": "833dde3f26292226eb64ae265da3b58790fa740c3c665313b589d5f6997c94bb"
+  },
+  "sourceReview": "https://github.com/helloimakeimpact/deepseek-harness/pull/1",
+  "publicationScope": "Native source published in the owned fork; public application artifact remains withheld",
+  "observedRuntimeBlocker": "Owned I/O model adapter is absent; the inherited default provider selection has no active adapter. Model execution is not qualified.",
+  "currentDocumentationCheck": {
+    "command": "DSH_GATE_CONCURRENCY=2 NODE_OPTIONS=--max-old-space-size=4096 pnpm run doc-sync",
+    "result": "passed",
+    "gates": 43,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 542.17,
+    "scope": "Complete current documentation aggregate; the earlier eight-worker attempt timed out its CLI-help child and was interrupted. No assertions/deadlines changed."
   }
 }
