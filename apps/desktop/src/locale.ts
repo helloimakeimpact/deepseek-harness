@@ -371,7 +371,7 @@ export function resolveDesktopLocale(locale: string): DesktopLocale {
     welcomeWorkstation: 'Harness',
     welcomeDescription: 'Intelligence, built together.',
     welcomeSignIn: chinese ? '使用 Indus Orbit 账户登录' : 'Sign in with Indus Orbit',
-    welcomeKeyDescription: chinese ? '配置 DeepSeek 模型以使用 Workstation' : 'Configure DeepSeek models to start using Workstation',
+    welcomeKeyDescription: chinese ? '使用 Indus Orbit 账号打开 I/O H。模型访问正在集成中。' : 'Open I/O H with your Indus Orbit account. Model access is being integrated.',
     updateTitle: chinese ? 'I/O Harness 更新' : 'I/O Harness Update',
   } }
 }

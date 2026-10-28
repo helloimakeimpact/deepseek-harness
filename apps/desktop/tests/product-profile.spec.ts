@@ -42,7 +42,7 @@ describe('I/O Harness native preview identity', () => {
       .toBe('https://download.deepseek.com')
   })
 
-  it('keeps both native locale dictionaries on the Workstation and Foundation identity', () => {
+  it('keeps both native locale dictionaries on the Harness and Foundation identity', () => {
     vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
     for (const locale of ['en-US', 'zh-CN']) {
       const messages = resolveDesktopLocale(locale).messages

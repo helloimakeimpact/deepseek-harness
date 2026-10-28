@@ -7,7 +7,7 @@ import css from './IndusBrand.module.css'
 type IndusBrandMarkProps = HeroBrandMarkOwnerProps & SidebarBrandMarkOwnerProps
 
 /**
- * Render the unchanged approved pixel master without the shell's fish animation.
+ * Render the uppercase I/O pixel master without the shell's fish animation.
  * @param props - Host-supplied dimensions and placement class.
  * @returns decorative artwork paired with visible product text.
  */
@@ -20,7 +20,7 @@ export function IndusBrandMark({ size, className }: IndusBrandMarkProps) {
 }
 
 /**
- * Render the I/O H wordmark with its Workstation expansion and Foundation identity.
+ * Render the I/O H wordmark with its Harness expansion and Foundation identity.
  * @returns visible product and organization names with the Foundation descriptor as a title.
  */
 export function IndusBrandName() {

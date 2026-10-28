@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-本分支让 `indus-orbit` 客户端构建在侧栏和会话首屏显示获准的像素标志，并突出显示 H 字标、Harness 全称及 Indus Orbit 基金会身份。`official` profile 保留 DeepSeek Harness 品牌；未选择的 profile 保留外壳回退。本包不保留运行时状态，也不影响模型请求。
+本分支让 `indus-orbit` 客户端构建在侧栏和会话首屏显示大写 I/O 像素标志，并突出显示 H 字标、Harness 全称及 Indus Orbit 基金会身份。`official` profile 保留 DeepSeek Harness 品牌；未选择的 profile 保留外壳回退。本包不保留运行时状态，也不影响模型请求。
 
 ## 目录
 
@@ -29,7 +29,7 @@ kind: "package-reference"
 
 ### 选择 profile
 
-`DSH_CLIENT_BUILD_PROFILE` 选择填充。`indus-orbit` 一起填充侧栏标志、名称和首屏标志。其原始栅格主文件保持静止，会话语言字典在两种界面语言中使用获准的英文品牌语句。`official` 只填充上游侧栏；其他值不注册填充。所有 profile 都会校验插件。
+`DSH_CLIENT_BUILD_PROFILE` 选择填充。`indus-orbit` 一起填充侧栏标志、名称和首屏标志。其由代码绘制的大写 I/O 栅格主文件保持静止，会话语言字典在两种界面语言中使用获准的英文品牌语句。`official` 只填充上游侧栏；其他值不注册填充。所有 profile 都会校验插件。
 
 ### 替换品牌
 
