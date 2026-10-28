@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events'
+import { app } from 'electron'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AppUpdater } from 'electron-updater'
 import { DESKTOP_HOST_PROTOCOL_VERSION } from '../src/host-protocol.ts'
@@ -45,7 +46,11 @@ describe('desktop release metadata', () => {
 })
 
 const coordinators: InstanceType<typeof DesktopUpdateCoordinator>[] = []
-afterEach(() => { for (const item of coordinators.splice(0)) item.dispose() })
+afterEach(() => {
+  for (const item of coordinators.splice(0)) item.dispose()
+  vi.unstubAllEnvs()
+  Object.assign(app, { isPackaged: false })
+})
 
 function fixture(channel: 'nightly' | 'latest' = 'nightly', version = '1.1.0-alpha.1') {
   const events = new EventEmitter()
@@ -73,6 +78,18 @@ function fixture(channel: 'nightly' | 'latest' = 'nightly', version = '1.1.0-alp
 }
 
 describe('desktop update coordinator', () => {
+  it('blocks an installed Workstation preview before any upstream update request', async () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
+    Object.assign(app, { isPackaged: true })
+    const f = fixture()
+    const coordinator = new DesktopUpdateCoordinator(state => state, f.beforeRestart, f.updater)
+    coordinators.push(coordinator)
+    expect(await coordinator.check(true)).toMatchObject({ phase: 'error', failedOperation: 'check' })
+    expect(f.checkForUpdates).not.toHaveBeenCalled()
+    expect(f.downloadUpdate).not.toHaveBeenCalled()
+    expect(f.quitAndInstall).not.toHaveBeenCalled()
+  })
+
   it('keeps safe preparation diagnostics separate and clears them on an explicit retry', async () => {
     const f = fixture()
     await f.coordinator.check()

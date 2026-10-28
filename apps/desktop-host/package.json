@@ -8,7 +8,8 @@
   "main": "lib/index.js",
   "files": [
     "lib/index.js",
-    "lib/cli.js"
+    "lib/cli.js",
+    "indus-orbit.patch.yml"
   ],
   "dependencies": {
     "koffi": "3.1.1",

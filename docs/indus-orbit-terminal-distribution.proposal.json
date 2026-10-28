@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "publicationStatus": "held",
+  "channel": "developer-preview",
+  "product": "I/O Harness",
+  "company": "Indus Orbit",
+  "line": "Intelligence, built together.",
+  "upstream": {
+    "repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "tag": "dsh-v0.2.1-rc.3",
+    "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
+    "prerelease": true,
+    "verifiedAt": "2026-10-27"
+  },
+  "source": {
+    "forkRepository": "https://github.com/helloimakeimpact/deepseek-harness",
+    "forkRevision": null,
+    "workingTreeChanges": true,
+    "patchSha256": null
+  },
+  "brandMaster": {
+    "path": "packages/client/ui-brand-official/src/client/indus-orbit-mark.png",
+    "sha256": "e24c72d57e28f9c0c77263db98cea372f3834514a078bc132212cb991e267987",
+    "bytes": 43607
+  },
+  "artifacts": [],
+  "requiredArtifactFields": [
+    "filename",
+    "platform",
+    "architecture",
+    "bytes",
+    "sha256",
+    "url",
+    "minimumOs",
+    "testedHost",
+    "signature",
+    "notarization"
+  ],
+  "releaseRequirements": [
+    "Profile-specific favicon and PWA identity; generic assets retain upstream defaults",
+    "Native installer build and platform verification of the isolated preview identity",
+    "Reviewed account, analytics and update-service destinations",
+    "Platform packaging and install/upgrade tests",
+    "Signing/notarization where required",
+    "Versioned HTTPS artifact publication",
+    "Preserved MIT and third-party notices",
+    "Owned I/O API model adapter, native identity acceptance and matched consent deployment"
+  ],
+  "websiteDownloadEnabled": false,
+  "productExpansion": "Harness",
+  "organizationType": "Foundation",
+  "definition": "The General Intelligence Foundation of India",
+  "buildProfile": "indus-orbit",
+  "nativePreview": {
+    "displayName": "I/O Harness",
+    "productName": "IO Harness",
+    "appId": "local.indusorbit.workstation.preview",
+    "protocol": "io-ws",
+    "updatesEnabled": false,
+    "signedPackagingAllowed": false,
+    "legacyUserDataDirectory": "IO W-S"
+  },
+  "identity": "Live public registration and isolated native sign-in screen verified; deployed consent and genuine account/refresh/revocation acceptance pending"
+}

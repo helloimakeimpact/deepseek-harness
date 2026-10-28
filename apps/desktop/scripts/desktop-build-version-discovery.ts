@@ -23,6 +23,7 @@ import { desktopBuildVersionPrefix, validateDesktopBuildVersion } from './deskto
 import { DESKTOP_AUTO_UPDATE_ENV, resolveDesktopUploadConfig } from './desktop-auto-update-environment.mjs'
 import { createDesktopCos, DESKTOP_COS_REGION } from './desktop-cos.ts'
 import type { DesktopPackageTargetName } from './package-target.ts'
+import { desktopPackagingProduct } from './desktop-product-profile.mjs'
 
 /** How long the whole bucket listing may take before the suggestion falls back to local artifacts. */
 const LISTING_DEADLINE_MS = 8_000
@@ -31,7 +32,9 @@ const LISTING_DEADLINE_MS = 8_000
 const LISTING_PAGE_SIZE = 1000
 
 /** Artifact name electron-builder writes for one build, on either platform; unsigned and unnotarized builds add a suffix. */
-const ARTIFACT = /(?:^|\/)deepseek-harness-(?<version>.+)-(?:mac|win)-(?:arm64|x64)(?:-unsigned|-unnotarized)?\.(?:exe|dmg|zip)$/u
+const ARTIFACT =
+  // eslint-disable-next-line @stylistic/max-len -- Keep the complete artifact filename expression together.
+  /(?:^|\/)(?<product>deepseek-harness|io-harness|io-ws)-(?<version>.+)-(?:mac|win)-(?:arm64|x64)(?:-unsigned|-unnotarized)?\.(?:exe|dmg|zip)$/u
 
 /** Inputs that decide which versions are already taken. */
 export interface DesktopBuildVersionSuggestionOptions {
@@ -73,11 +76,14 @@ function sequenceNumbers(versions: Iterable<string>, prefix: string): number[] {
 /**
  * Read the versions one output directory already holds.
  * @param artifactsRoot - Directory electron-builder wrote installers into.
+ * @param artifactPrefixes - Current and retained product filename prefixes to count independently.
  * @returns Versions parsed from artifact names.
  */
-async function localVersions(artifactsRoot: string): Promise<string[]> {
+async function localVersions(artifactsRoot: string, artifactPrefixes: readonly string[]): Promise<string[]> {
   const entries = await readdir(artifactsRoot).catch(() => [])
-  return entries.map(entry => ARTIFACT.exec(entry)?.groups?.version)
+  return entries.map(entry => ARTIFACT.exec(entry)?.groups)
+    .filter(groups => groups?.product !== undefined && artifactPrefixes.includes(groups.product))
+    .map(groups => groups?.version)
     .filter((version): version is string => version !== undefined && parse(version) !== null)
 }
 
@@ -87,6 +93,7 @@ async function localVersions(artifactsRoot: string): Promise<string[]> {
  * @returns Versions parsed from object names, or undefined when the bucket cannot be listed completely in time.
  */
 async function remoteVersions(options: DesktopBuildVersionSuggestionOptions): Promise<string[] | undefined> {
+  if (!desktopPackagingProduct(options.environment).updatesEnabled) return undefined
   const platform = options.target === 'win-x64' ? 'win32' as const : 'darwin' as const
   const arch = options.target === 'mac-arm64' ? 'arm64' : 'x64'
   // An unconfigured destination has nothing to be unique against; an invalid one must not be mistaken for it.
@@ -146,7 +153,9 @@ async function remoteVersions(options: DesktopBuildVersionSuggestionOptions): Pr
 export async function suggestDesktopBuildVersion(options: DesktopBuildVersionSuggestionOptions): Promise<string> {
   const prefix = `${desktopBuildVersionPrefix(options.productVersion)}${options.date ?? desktopBuildDateSegment()}.`
   const published = await remoteVersions(options)
-  const taken = published ?? await localVersions(options.artifactsRoot)
+  const product = desktopPackagingProduct(options.environment)
+  const prefixes = product.updatesEnabled ? [product.artifactPrefix] : [product.artifactPrefix, 'io-ws']
+  const taken = published ?? await localVersions(options.artifactsRoot, prefixes)
   const used = sequenceNumbers(taken, prefix)
   const next = used.length === 0 ? 1 : Math.max(...used) + 1
   const suggestion = validateDesktopBuildVersion(`${prefix}${String(next)}`, options.productVersion)

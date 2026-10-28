@@ -8,7 +8,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { attempt, attemptEchoed, type CommandResult } from './process.ts'
 import { publishRelease } from './publish.ts'
-import { packedIdentity, readPublishOrder } from './tarball.ts'
+import { LOCAL_PACK_ORDER_FILE, LOCAL_PREVIEW_MARKER_FILE, packedIdentity, readPublishOrder } from './tarball.ts'
 
 vi.mock('./process.ts', async importOriginal => ({
   ...await importOriginal<typeof import('./process.ts')>(),
@@ -94,6 +94,15 @@ function registry(
     throw new Error(`Unexpected npm view field ${String(args[2])}`)
   })
 }
+
+it.each([LOCAL_PACK_ORDER_FILE, LOCAL_PREVIEW_MARKER_FILE])('rejects a local preview %s before reading tarballs or contacting npm', async (marker) => {
+  const { directory } = packedRelease(['0.2.1-rc.3'])
+  writeFileSync(join(directory, marker), 'local preview')
+  await expect(publishRelease('dsh', directory)).rejects.toThrow(/cannot be published to npm/)
+  expect(readPublishOrder).not.toHaveBeenCalled()
+  expect(attempt).not.toHaveBeenCalled()
+  expect(attemptEchoed).not.toHaveBeenCalled()
+})
 
 beforeEach(() => {
   vi.resetAllMocks()

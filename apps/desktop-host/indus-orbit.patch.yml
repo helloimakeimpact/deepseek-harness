@@ -1,0 +1,16 @@
+# Indus Orbit owns identity and provider activation; no upstream account is loaded.
+- id: llm-deepseek-account
+  disabled: true
+- id: llm-deepseek
+  disabled: true
+- id: ui-settings-account
+  disabled: true
+- id: account-controller
+  disabled: true
+- id: product-analytics
+  disabled: true
+- id: desktop-product-telemetry
+  disabled: true
+- id: session-telemetry-otel
+  config:
+    mode: DISABLED

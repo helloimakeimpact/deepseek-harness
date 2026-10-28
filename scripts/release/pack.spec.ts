@@ -7,11 +7,11 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { officialClientBuildEnvironment, writeClientBuildRecord } from '../client-build-environment.ts'
+import { officialClientBuildEnvironment, resolveClientBuildEnvironment, writeClientBuildRecord } from '../client-build-environment.ts'
 import { runGate, type Gate } from '../run-gates.ts'
 import { removeFixtureSafely } from '../test-fixture-cleanup.ts'
 import { releaseFamily, tarballName } from './families.ts'
-import { packedIdentity, PUBLISH_ORDER_FILE, readPublishOrder } from './tarball.ts'
+import { LOCAL_PACK_ORDER_FILE, LOCAL_PREVIEW_MARKER_FILE, packedIdentity, PUBLISH_ORDER_FILE, readPublishOrder } from './tarball.ts'
 
 const require = createRequire(import.meta.url)
 const packScript = resolve(import.meta.dirname, 'pack.ts')
@@ -318,6 +318,19 @@ describe('release pack CLI', () => {
     expect(result.stderr).toContain('@deepseek-ai/zebra publishes source file package/src/index.ts')
     expect(readdirSync(join(root, 'packed')).filter(name => name.endsWith('.tgz'))).toHaveLength(2)
     expect(existsSync(join(root, 'packed', PUBLISH_ORDER_FILE))).toBe(false)
+  })
+
+  it('packs an explicit Workstation preview without making an npm publication order', async () => {
+    const root = fixture()
+    packageFixture(root, 'packages/util/probe', '@deepseek-ai/dsh-probe')
+    write(join(root, 'apps/web/dist/index.html'), '<main></main>')
+    const environment = resolveClientBuildEnvironment(officialClientBuildEnvironment(root, { DSH_CLIENT_COMMIT_HASH: commit }), 'indus-orbit')
+    writeClientBuildRecord(root, environment)
+    const result = await runPack(root, ['--family', 'dsh', '--client-profile', 'indus-orbit'])
+    expect(result.status).toBe(0)
+    expect(existsSync(join(root, 'packed', PUBLISH_ORDER_FILE))).toBe(false)
+    expect(readFileSync(join(root, 'packed', LOCAL_PACK_ORDER_FILE), 'utf8')).toContain('deepseek-ai-dsh-probe-1.2.3.tgz')
+    expect(JSON.parse(readFileSync(join(root, 'packed', LOCAL_PREVIEW_MARKER_FILE), 'utf8'))).toEqual({ clientProfile: 'indus-orbit', publication: 'forbidden' })
   })
 
   it.each(['dependencies', 'optionalDependencies', 'peerDependencies'])(

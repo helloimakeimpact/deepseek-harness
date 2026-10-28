@@ -89,4 +89,18 @@ describe('desktop build version discovery', () => {
     await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'win-x64', environment: {}, date: DATE, artifactsRoot }))
       .resolves.toBe(`${PRERELEASE}.${DATE}.3`)
   })
+
+  it('numbers fork previews independently and ignores inherited upstream publication settings', async () => {
+    const artifactsRoot = await artifactsWith([
+      `io-ws-${PRERELEASE}.${DATE}.2-mac-arm64-unsigned.dmg`,
+      `io-harness-${PRERELEASE}.${DATE}.3-mac-arm64-unsigned.dmg`,
+      `deepseek-harness-${PRERELEASE}.${DATE}.99-mac-arm64-unsigned.dmg`,
+      `io-ws-${PRERELEASE}.${DATE}.8-mac-arm64-unsigned.dmg.blockmap`,
+    ])
+    await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'mac-arm64', artifactsRoot, date: DATE,
+      environment: { DSH_BUILD_CLIENT_PROFILE: 'indus-orbit', DSH_DESKTOP_AUTO_UPDATE_ENV: 'production' } }))
+      .resolves.toBe(`${PRERELEASE}.${DATE}.4`)
+    await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'mac-arm64', artifactsRoot, date: DATE, environment: {} }))
+      .resolves.toBe(`${PRERELEASE}.${DATE}.100`)
+  })
 })

@@ -1,5 +1,5 @@
 ---
-description: "面向侧栏的官方 DeepSeek Harness 品牌填充，仅在官方构建中生效；供选择或替换品牌呈现的用户与维护者阅读。"
+description: "按构建选择 DeepSeek Harness 或 Indus Orbit 品牌填充；供维护者选择客户端身份并检查 slot 生命周期。"
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-本包让以 `official` profile 构建的客户端在侧栏显示 DeepSeek Harness 标志与名称。其他构建 profile 保留外壳的鱼形标志与本地构建标签，会话首屏则始终使用动画鱼。品牌为 DeepSeek Harness 的部署应选择本包；使用其他品牌的部署应提供替代品牌包。本包不保留运行时状态，也不影响模型请求。
+本分支让 `indus-orbit` 客户端构建在侧栏和会话首屏显示获准的像素标志，并突出显示 H 字标、Harness 全称及 Indus Orbit 基金会身份。`official` profile 保留 DeepSeek Harness 品牌；未选择的 profile 保留外壳回退。本包不保留运行时状态，也不影响模型请求。
 
 ## 目录
 
@@ -25,15 +25,15 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-在采用 DeepSeek 自有品牌的部署中，将本插件挂载到浏览器插件名单，然后以 `official` profile 构建客户端，让填充得以注册。
+随附的 Web bundle 已挂载本插件。命名构建配置 `DSH_BUILD_CLIENT_PROFILE=indus-orbit` 负责 I/O Harness 标题与公开身份；`official` 保留上游身份。[Indus Orbit 预览参考](../../../docs/indus-orbit-terminal-preview.zh.md)说明本分支的分发限制。
 
 ### 选择 profile
 
-`DSH_CLIENT_BUILD_PROFILE` 决定渲染哪个品牌。`official` 构建在侧栏显示官方标志与名称；任何其他取值都让外壳回退——鱼形标志与本地构建标签——保持原样。会话首屏无论 profile 如何都显示来自 `dsh-client-ui-conversation` 的动画首屏鱼，因为这个回退本身就是官方标志。两种情况下插件都会照常加载并通过校验；只有注册受 profile 门控。
+`DSH_CLIENT_BUILD_PROFILE` 选择填充。`indus-orbit` 一起填充侧栏标志、名称和首屏标志。其原始栅格主文件保持静止，会话语言字典在两种界面语言中使用获准的英文品牌语句。`official` 只填充上游侧栏；其他值不注册填充。所有 profile 都会校验插件。
 
 ### 替换品牌
 
-自有身份的部署不组合本包，而是组合另一个占据侧栏 slot——以及本包留给回退的首屏 slot——的包。占据 slot 是唯一的组合路径；这里不存在任何品牌配置面。
+其他身份可省略本包并挂载替代填充包。本分支和替代包都无需重写通用侧栏、执行控件或会话状态。构建期品牌选择不会连接 Messaging 账户或启用提供方。
 
 -----
 
@@ -43,7 +43,7 @@ kind: "package-reference"
 <details>
 <summary>实现细节——点击展开</summary>
 
-两个填充作为一组声明感知的注册安装：嵌套的 `ctx.slots.inject()` 调用等待侧栏声明，因此无论本行在声明者之前还是之后激活，这组注册都能工作；声明消失时两个填充一并撤回，HMR 期间也不会留下残缺的品牌混合。浏览器半部是 [`src/client/index.ts`](src/client/index.ts)；node 半部是一个空 Loader 座位。浏览器标题是构建环境的事（`DSH_CLIENT_TITLE`），不在 slot 系统之内。
+每组填充通过嵌套的 `ctx.slots.inject()` 调用安装。Indus Orbit 还等待首屏声明；任一所需声明消失时三个填充一并撤回，重新声明后恢复，HMR 期间不会留下残缺的品牌混合。浏览器半部是 [`src/client/index.ts`](src/client/index.ts)；node 半部是一个空 Loader 座位。浏览器标题是构建环境的事（`DSH_CLIENT_TITLE`），不在 slot 系统之内。
 
 </details>
 
@@ -76,7 +76,7 @@ kind: "package-reference"
 
 这些限制界定了品牌呈现的供给方式。它们是当前包约束，不是品牌设计对比或任务积压。
 
-- **只有一组填充**——替代呈现属于占据相同 slot 的另一个 Cordis 包。
+- **按构建选择身份**——其他身份需要明确的构建 profile 或替代填充包。
 - **浏览器标题独立**——`DSH_CLIENT_TITLE` 在构建时选择标题文本，而非通过 UI slot。
 
 <a id="dev-note"></a>

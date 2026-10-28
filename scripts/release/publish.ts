@@ -13,14 +13,14 @@
  */
 
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { parseArgs } from 'node:util'
 import { valid, validRange } from 'semver'
 import { releaseFamily } from './families.ts'
 import { attempt, attemptEchoed, isEntry } from './process.ts'
-import { packedIdentity, readPublishOrder, type PackedIdentity } from './tarball.ts'
+import { LOCAL_PACK_ORDER_FILE, LOCAL_PREVIEW_MARKER_FILE, packedIdentity, readPublishOrder, type PackedIdentity } from './tarball.ts'
 
 /**
  * Registry codes that answer a write which did not settle, rather than a
@@ -174,6 +174,9 @@ async function publishTarball(
  * @returns Resolves after every artifact has been published or verified as already present.
  */
 export async function publishRelease(familyId: string, directory: string, distTag?: string): Promise<void> {
+  if (existsSync(join(directory, LOCAL_PREVIEW_MARKER_FILE)) || existsSync(join(directory, LOCAL_PACK_ORDER_FILE))) {
+    throw new Error('release publish: local I/O W-S preview packs cannot be published to npm')
+  }
   if (distTag !== undefined) validateDistTag(distTag)
   const family = releaseFamily(familyId)
 

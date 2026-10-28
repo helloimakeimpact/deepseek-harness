@@ -72,6 +72,50 @@ describe('unique object-name prefix search', () => {
 })
 
 describe('maintained repository reference policy', () => {
+  it('treats canonical uv artifact sizes as numeric metadata while checking quoted and prose references', () => {
+    const commit = String(6_344_383)
+    const commits = new Set([commit])
+    const artifact = `{ url = "https://files.pythonhosted.org/pillow.whl", hash = "sha256:${'a'.repeat(64)}", size = ${commit}, upload-time = "2026-07-01T11:54:15.756Z" },`
+    expect(findRepositoryReferences('python/sdk/uv.lock', artifact, commits)).toEqual([])
+    expect(findRepositoryReferences('python/sdk/uv.lock', `sdist = ${artifact.slice(0, -1)}`, commits)).toEqual([])
+    expect(findRepositoryReferences('python/sdk/uv.lock', artifact.replace(`size = ${commit}`, `size = "${commit}"`), commits)).toHaveLength(1)
+    expect(findRepositoryReferences('python/sdk/uv.lock', artifact.replace('pillow.whl', `${commit}.whl`), commits)).toHaveLength(1)
+    expect(findRepositoryReferences('python/sdk/uv.lock', `size = ${commit}`, commits)).toHaveLength(1)
+    expect(findRepositoryReferences('docs/example.md', artifact, commits)).toHaveLength(1)
+  })
+
+  for (const file of [
+    'docs/indus-orbit-local-verification-2026-10-22.json',
+    'docs/indus-orbit-workstation-verification-2026-10-27.json',
+    'docs/indus-orbit-terminal-distribution.proposal.json',
+  ]) {
+    it(`validates source-revision data and rejects prose through the repository scanner for ${file}`, (test) => {
+      const subject = repository(test)
+      const document = file.endsWith('proposal.json') ? { upstream: { commit: subject.commit } } : { sourceBase: subject.commit }
+      subject.write(file, JSON.stringify(document, null, 2))
+      expect(scanRepositoryReferences(subject.root)).toEqual([])
+      subject.write(file, JSON.stringify({ ...document, note: subject.commit }, null, 2))
+      expect(scanRepositoryReferences(subject.root)).toEqual([{ file, line: file.endsWith('proposal.json') ? 5 : 3, kind: 'commit-hash' }])
+    })
+  }
+
+  it('classifies exact JSON source-revision fields while retaining prose and unrelated-field checks', () => {
+    const commit = '0123456789abcdef0123456789abcdef01234567'
+    const commits = new Set([commit])
+    const receipt = 'docs/indus-orbit-workstation-verification-2026-10-27.json'
+    const source = JSON.stringify({ sourceBase: commit, note: commit }, null, 2)
+    expect(findRepositoryReferences(receipt, source, commits)).toEqual([{ file: receipt, line: 3, kind: 'commit-hash' }])
+    expect(findRepositoryReferences('docs/another-record.json', source, commits)).toHaveLength(2)
+    expect(findRepositoryReferences(receipt, `sourceBase: ${commit}`, commits)).toHaveLength(1)
+    expect(findRepositoryReferences(receipt, JSON.stringify({ sourceBase: commit.slice(0, 7) }, null, 2), new Set([commit.slice(0, 7)])))
+      .toHaveLength(1)
+    const proposal = 'docs/indus-orbit-terminal-distribution.proposal.json'
+    expect(findRepositoryReferences(proposal, JSON.stringify({ upstream: { commit } }, null, 2), commits)).toEqual([])
+    expect(findRepositoryReferences(proposal, JSON.stringify({ commit }, null, 2), commits)).toHaveLength(1)
+    expect(findRepositoryReferences(receipt, JSON.stringify({ sourceBase: commit, note: organizationUrl }, null, 2), commits))
+      .toEqual([{ file: receipt, line: 3, kind: 'organization-url' }])
+  })
+
   it('permits only the independent kit repository and its source URLs', () => {
     for (const suffix of ['', '.git', '/tree/main/packages/entry']) {
       expect(findRepositoryReferences('package.json', `${organizationUrl}/libreoffice-kit${suffix}`, new Set())).toEqual([])

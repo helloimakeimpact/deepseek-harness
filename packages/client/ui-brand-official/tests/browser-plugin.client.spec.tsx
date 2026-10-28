@@ -5,6 +5,7 @@ import { cleanup, render } from '@testing-library/react'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { apply, inject } from '../src/client/index.ts'
 import { OfficialBrandMark, OfficialBrandName } from '../src/client/Brand.tsx'
+import { IndusBrandMark, IndusBrandName } from '../src/client/IndusBrand.tsx'
 import { apply as hostApply } from '../src/index.ts'
 
 afterEach(() => {
@@ -76,6 +77,43 @@ describe('official browser-brand plugin', () => {
     const subject = await bench()
     await subject.ctx.plugin({ inject: [...inject], apply }).await()
     expect(subject.slots.entries(HERO_HOLE)).toHaveLength(0)
+  })
+
+  it('mounts the Indus sidebar and hero together and restores them after declarations return', async () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
+    const subject = await bench(false)
+    const fiber = subject.ctx.plugin({ inject: [...inject], apply })
+    await fiber.await()
+    const holes = [...HOLES, HERO_HOLE] as const
+    for (const hole of holes) expect(subject.slots.entries(hole)).toHaveLength(0)
+    const dispose = subject.declareHoles()
+    await Promise.resolve()
+    for (const hole of holes) expect(subject.slots.entries(hole)).toHaveLength(1)
+    dispose()
+    for (const hole of holes) expect(subject.slots.entries(hole)).toHaveLength(0)
+    subject.declareHoles()
+    await Promise.resolve()
+    for (const hole of holes) expect(subject.slots.entries(hole)).toHaveLength(1)
+    await fiber.dispose()
+    for (const hole of holes) expect(subject.slots.entries(hole)).toHaveLength(0)
+  })
+
+  it('renders the Indus product name and approved pixel artwork at both host sizes', () => {
+    const name = render(<IndusBrandName />)
+    expect(name.getByLabelText('I/O Harness')).toBeTruthy()
+    expect(name.getByText('H').tagName).toBe('STRONG')
+    expect(name.getByText('Harness')).toBeTruthy()
+    expect(name.getByText('Indus Orbit')).toBeTruthy()
+    expect(name.container.querySelector('[title]')?.getAttribute('title')).toBe('The General Intelligence Foundation of India')
+    name.unmount()
+    const mark = render(<IndusBrandMark size={34} className="host-placement" />)
+    const image = mark.container.querySelector('img')
+    expect(image?.getAttribute('src')).toContain('indus-orbit-mark.png')
+    expect(image?.getAttribute('width')).toBe('34')
+    expect(image?.getAttribute('alt')).toBe('')
+    expect(image?.classList.contains('host-placement')).toBe(true)
+    mark.rerender(<IndusBrandMark size={24} />)
+    expect(image?.getAttribute('width')).toBe('24')
   })
 
   it('renders the official name independently from both requested mark sizes', () => {

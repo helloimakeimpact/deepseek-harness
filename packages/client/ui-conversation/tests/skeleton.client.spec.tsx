@@ -86,6 +86,7 @@ function fireResize(el: Element): void {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
   vi.unstubAllGlobals()
   resizeObservers.length = 0
 })
@@ -408,6 +409,17 @@ function mount(
 }
 
 describe('Hero chrome', () => {
+  it('keeps the approved Indus line and truthful preview badge in both interface locales', () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
+    const renderSlot = vi.fn<HeroShellProps['renderSlot']>(() => null)
+    const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)
+    expect(view.getByText('Intelligence, built together.')).toBeTruthy()
+    expect(view.getByText('Preview')).toBeTruthy()
+    view.rerender(<HeroShell t={makeTranslate(zh, commonZh)} renderSlot={renderSlot} />)
+    expect(view.getByText('Intelligence, built together.')).toBeTruthy()
+    expect(view.getByText(zh['hero.preview'])).toBeTruthy()
+  })
+
   it('renders the English preview badge through the hero locale seat', () => {
     const renderSlot = vi.fn<HeroShellProps['renderSlot']>(() => null)
     const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)

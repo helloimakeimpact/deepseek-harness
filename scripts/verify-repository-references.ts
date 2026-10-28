@@ -12,6 +12,12 @@ const organizationUrl = new RegExp(`\\bgithub\\.com/${organization}(?![a-z0-9-])
 // The independent kit repository owns the engine source and documentation.
 const kitRepositoryUrl = new RegExp(`\\bgithub\\.com/${organization}/libreoffice-kit(?:\\.git)?(?=/|[^a-zA-Z0-9_.-]|$)`, 'g')
 const commitCandidate = /(?<![a-z0-9])[\da-f]{7,40}(?![a-z0-9])/gi
+// Canonical uv wheel/sdist rows store the unquoted artifact byte count between the hash and upload timestamp.
+const uvArtifactSize = new RegExp(
+  String.raw`^(\s*(?:sdist = )?\{ url = "[^"\n]*", hash = "sha256:[\da-f]{64}", size = )`
+  + String.raw`\d+(, upload-time = "[^"\n]*" \},?\s*)$`,
+  'u',
+)
 const excludedPrefixes = ['vendor/', '.agents/notes/archived/']
 const gitOutputLimit = 64 * 1024 * 1024
 // One 41-byte line per object; 1.2 million objects produce about 49 MiB.
@@ -31,6 +37,26 @@ function isMaintained(file: string): boolean {
   return !excludedPrefixes.some(prefix => file.startsWith(prefix))
 }
 
+/** Exact source revisions are data in these fork verification records, not prose references. */
+function recordedSourceCommit(file: string, source: string): { key: string; value: string } | undefined {
+  const receipt = file === 'docs/indus-orbit-local-verification-2026-10-22.json'
+    || file === 'docs/indus-orbit-workstation-verification-2026-10-27.json'
+  const proposal = file === 'docs/indus-orbit-terminal-distribution.proposal.json'
+  if (!receipt && !proposal) return undefined
+  let document: unknown
+  try { document = JSON.parse(source) }
+  catch (_invalidEvidence) {
+    // Invalid JSON cannot declare a source-revision field.
+    return undefined
+  }
+  if (typeof document !== 'object' || document === null) return undefined
+  const upstream = 'upstream' in document ? document.upstream : undefined
+  const value = receipt && 'sourceBase' in document ? document.sourceBase
+    : proposal && typeof upstream === 'object' && upstream !== null && 'commit' in upstream ? upstream.commit : undefined
+  return typeof value === 'string' && /^[a-f0-9]{40}$/u.test(value)
+    ? { key: receipt ? 'sourceBase' : 'commit', value } : undefined
+}
+
 /**
  * Inspect a maintained source file against known commit identifiers.
  * @param file - Repository-relative path used in diagnostics and exclusions.
@@ -44,12 +70,16 @@ export function findRepositoryReferences(
   commits: ReadonlySet<string>,
 ): RepositoryReference[] {
   if (!isMaintained(file)) return []
+  const recorded = recordedSourceCommit(file, source)
   const references: RepositoryReference[] = []
   for (const [index, line] of source.split('\n').entries()) {
     if (organizationUrl.test(canonicalReferenceText(line).replace(kitRepositoryUrl, ''))) {
       references.push({ file, line: index + 1, kind: 'organization-url' })
     }
-    if ([...line.matchAll(commitCandidate)].some(match => commits.has(match[0].toLowerCase()))) {
+    const evidenceField = recorded !== undefined
+      && line.trim().replace(/,$/u, '') === `"${recorded.key}": "${recorded.value}"`
+    const commitText = file === 'python/sdk/uv.lock' ? line.replace(uvArtifactSize, '$1$2') : line
+    if (!evidenceField && [...commitText.matchAll(commitCandidate)].some(match => commits.has(match[0].toLowerCase()))) {
       references.push({ file, line: index + 1, kind: 'commit-hash' })
     }
   }

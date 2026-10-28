@@ -68,6 +68,8 @@ export const en = {
   disableThirdPartyPlugins: 'Disable third-party plugins, back up profile patch, and restart',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Welcome to ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -109,6 +111,7 @@ export const en = {
   updateInstallNetworkFailed: 'Could not install the update. Check your connection and try again.',
   unknownError: 'Unknown error',
   updateCheckTitle: 'Check for Updates',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Current version: {version}',
   updateCurrent: 'You’re up to date!',
   updateChecking: 'Checking for updates…',
@@ -239,6 +242,8 @@ export const zh = {
   disableThirdPartyPlugins: '禁用第三方插件、备份 profile patch 并重启',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: '欢迎使用 ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -280,6 +285,7 @@ export const zh = {
   updateInstallNetworkFailed: '安装更新失败，请检查网络连接后重试。',
   unknownError: '未知错误',
   updateCheckTitle: '检查更新',
+  updateUnavailable: '此 I/O Harness 预览版暂不提供自动更新。Indus Orbit 发布版本后，请使用经过验证的发行版本。',
   updateCurrentDetail: '当前版本：{version}',
   updateCurrent: '已是最新版本',
   updateChecking: '正在检查更新…',
@@ -347,9 +353,27 @@ export interface DesktopLocale {
 
 /** Resolve Electron's locale to one shipped Desktop dictionary. */
 export function resolveDesktopLocale(locale: string): DesktopLocale {
-  return locale.toLowerCase().startsWith('zh')
+  const resolved: DesktopLocale = locale.toLowerCase().startsWith('zh')
     ? { id: 'zh-CN', messages: zh }
     : { id: 'en', messages: en }
+  if (process.env.DSH_CLIENT_BUILD_PROFILE !== 'indus-orbit') return resolved
+  const chinese = resolved.id === 'zh-CN'
+  return { ...resolved, messages: {
+    ...resolved.messages,
+    aboutMenu: chinese ? '关于 I/O Harness' : 'About I/O Harness',
+    aboutProduct: 'I/O Harness',
+    hideApplication: chinese ? '隐藏 I/O Harness' : 'Hide I/O Harness',
+    quitApplication: chinese ? '退出 I/O Harness' : 'Quit I/O Harness',
+    openApplication: chinese ? '打开 I/O Harness' : 'Open I/O Harness',
+    quitTitle: chinese ? '退出 I/O Harness？' : 'Quit I/O Harness?',
+    startupFailed: chinese ? 'I/O Harness 无法使用' : 'I/O Harness is unavailable',
+    welcomeTitle: 'I/O Harness — Indus Orbit', welcomeBrand: 'I/O Harness', welcomeTaglineBrand: 'I/O Harness',
+    welcomeWorkstation: 'Harness',
+    welcomeDescription: 'Intelligence, built together.',
+    welcomeSignIn: chinese ? '使用 Indus Orbit 账户登录' : 'Sign in with Indus Orbit',
+    welcomeKeyDescription: chinese ? '配置 DeepSeek 模型以使用 Workstation' : 'Configure DeepSeek models to start using Workstation',
+    updateTitle: chinese ? 'I/O Harness 更新' : 'I/O Harness Update',
+  } }
 }
 
 /**

@@ -1,0 +1,113 @@
+{
+  "checkedAt": "2026-10-28",
+  "state": "Partial",
+  "sourceBase": "1f81c047fc48fa190a683e469daa699857e9afe8",
+  "tag": "dsh-v0.2.1-rc.3",
+  "profile": "indus-orbit",
+  "product": "I/O Harness",
+  "shortName": "I/O H",
+  "expansion": "Harness",
+  "organizationDescriptor": "The General Intelligence Foundation of India",
+  "host": {
+    "os": "Darwin",
+    "architecture": "arm64",
+    "node": "24.15.0",
+    "pnpm": "11.28.5"
+  },
+  "productionReady": false,
+  "publiclyPublished": false,
+  "sourceOnly": true,
+  "nativePackagingStatus": "held; no current own-identity installer",
+  "identity": {
+    "clientName": "I/O Harness",
+    "clientId": "cf26c996-8c19-42c6-82ff-f0b6ccafd3ee",
+    "clientType": "public",
+    "clientSecret": false,
+    "callback": "http://127.0.0.1:43189/indus-auth/callback",
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ],
+    "registrationVerified": true,
+    "discoveryVerified": true,
+    "signedOutAuthorizationRedirectVerified": true,
+    "nativeSignInScreenVerified": true,
+    "genuineUserSignInVerified": false,
+    "refreshRevocationAccepted": false
+  },
+  "results": [
+    {
+      "command": "pnpm run build:indus-orbit",
+      "result": "passed",
+      "gates": 9,
+      "failed": 0,
+      "clientArtifacts": 335,
+      "publicBuildValues": 6
+    },
+    {
+      "command": "pnpm run typecheck",
+      "result": "passed",
+      "gates": 5,
+      "failed": 0
+    },
+    {
+      "command": "focused changed-file Vitest regressions and affected-file rerun",
+      "result": "passed",
+      "files": 13,
+      "uniqueTests": 204,
+      "scope": "Initial run 203 passed and one legacy build-numbering case failed; after correction the affected nine-case file passed. Counts are unique, not a single 204-case green run."
+    },
+    {
+      "command": "focused identity and brand Vitest checkpoint",
+      "result": "passed",
+      "files": 6,
+      "tests": 28,
+      "scope": "Subset of the changed-file coverage; not additive"
+    },
+    {
+      "command": "pnpm run doc-sync and targeted repair checks",
+      "result": "passed-after-repair",
+      "gates": 43,
+      "initialPassed": 41,
+      "initialFailed": 2,
+      "repairs": [
+        "Documentation graphs checked with a 4 GiB heap after default-heap exhaustion; seven graphs current",
+        "Regenerated client slot catalog, then catalog check passed"
+      ],
+      "documentationPairs": 1021,
+      "documentationStandardCases": 22
+    },
+    {
+      "command": "DSH_CLIENT_BUILD_PROFILE=indus-orbit pnpm exec vitest run --config vitest.web.config.ts apps/web/tests/indus-orbit-brand.e2e.ts",
+      "result": "passed",
+      "files": 1,
+      "tests": 1,
+      "scope": "Keyless assembled UI, semantic snapshot, loaded pixel master, desktop and 375px phone viewport"
+    },
+    {
+      "command": "Isolated start:desktop and native UI inspection",
+      "result": "passed",
+      "scope": "New QA home and Electron data; genuine I/O Harness window shows Indus Orbit sign-in, I/O H and approved line. No user sign-in or provider call."
+    }
+  ],
+  "artifacts": [],
+  "heldLegacyArtifact": {
+    "filename": "io-ws-0.2.1-rc.3-mac-arm64-unsigned.dmg",
+    "bytes": 264998943,
+    "sha256": "53b48809168c3179f7341624c4e9d8a2144bef5e860b14e2aca1312dda922fb1",
+    "publiclyOffered": false,
+    "reason": "Earlier W-S build uses inherited upstream login; not the current own-identity Harness release"
+  },
+  "limits": [
+    "Matching website consent deployment and genuine account/refresh/revocation acceptance remain",
+    "Owned I/O API model adapter and secure key connection are not implemented; own identity does not supply model execution",
+    "No current signed/notarized installer, public artifact, owned updater or cross-platform installation/upgrade qualification",
+    "No model/provider invocation, old credential inspection/migration/deletion or paid API test"
+  ],
+  "preservation": {
+    "directory": "../io-ws-preservation-2026-10-27",
+    "files": 47,
+    "patchSha256": "833dde3f26292226eb64ae265da3b58790fa740c3c665313b589d5f6997c94bb"
+  }
+}

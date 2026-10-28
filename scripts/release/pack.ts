@@ -14,7 +14,7 @@ import { parseArgs } from 'node:util'
 import { pnpmInvocation } from '../pnpm-invocation.ts'
 import { releaseFamily, tarballName, type ReleaseFamily, type ReleaseMember } from './families.ts'
 import { isEntry, runConcurrent } from './process.ts'
-import { PUBLISH_ORDER_FILE, packedManifest, tarballFiles } from './tarball.ts'
+import { LOCAL_PACK_ORDER_FILE, LOCAL_PREVIEW_MARKER_FILE, PUBLISH_ORDER_FILE, packedManifest, tarballFiles } from './tarball.ts'
 
 /** Where pack output lands when `--out` is omitted. */
 const DEFAULT_OUTPUT = 'dist/npm'
@@ -83,7 +83,7 @@ function parseConcurrency(raw: string | undefined): number {
 /** Pack the family named by `--family` into `--out`. */
 async function main(): Promise<void> {
   const { values } = parseArgs({
-    options: { family: { type: 'string' }, out: { type: 'string' }, concurrency: { type: 'string' } },
+    options: { family: { type: 'string' }, out: { type: 'string' }, concurrency: { type: 'string' }, 'client-profile': { type: 'string' } },
     allowPositionals: false,
   })
   if (values.family === undefined) throw new Error('usage: pack.ts --family <dsh|vendor> [--out dist/npm] [--concurrency 1]')
@@ -93,14 +93,21 @@ async function main(): Promise<void> {
   const root = process.cwd()
   const destination = resolve(root, values.out ?? DEFAULT_OUTPUT)
   const members = family.publishOrder(family.members(root)).order
-  family.verifyBuildArtifacts(root)
+  if (values['client-profile'] !== undefined && family.id !== 'dsh') {
+    throw new Error('release pack: --client-profile applies only to the dsh family')
+  }
+  family.verifyBuildArtifacts(root, values['client-profile'])
   family.verifyVersions(members)
 
   rmSync(destination, { recursive: true, force: true })
   mkdirSync(destination, { recursive: true })
+  const localPreview = values['client-profile'] === 'indus-orbit'
+  if (localPreview) {
+    writeFileSync(join(destination, LOCAL_PREVIEW_MARKER_FILE), `${JSON.stringify({ clientProfile: 'indus-orbit', publication: 'forbidden' })}\n`)
+  }
 
   const order = await packMembers(family, members, destination, concurrency)
-  writeFileSync(join(destination, PUBLISH_ORDER_FILE), `${order.join('\n')}\n`)
+  writeFileSync(join(destination, localPreview ? LOCAL_PACK_ORDER_FILE : PUBLISH_ORDER_FILE), `${order.join('\n')}\n`)
 
   console.log(`release pack: family ${family.id}, ${String(order.length)} tarball(s) in ${values.out ?? DEFAULT_OUTPUT}`)
 }

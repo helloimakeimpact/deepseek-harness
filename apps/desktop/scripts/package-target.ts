@@ -24,6 +24,7 @@ import { suggestDesktopBuildVersion } from './desktop-build-version-discovery.ts
 import { desktopBuildCommitEnvironment, readDesktopBuildCommit, resolveDesktopBuildCommit } from './desktop-build-commit.mjs'
 import { requireDesktopToolchain } from './desktop-toolchain-preflight.ts'
 import { withMacOSNotarizationProxy } from './macos-notarization-proxy.ts'
+import { assertDesktopProfilePackaging, desktopPackagingProduct } from './desktop-product-profile.mjs'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -319,7 +320,7 @@ function runPnpm(
  * @param environment - Release settings, which name the bucket automatic numbering reads.
  * @returns The product version, the requested version, or the next free index for today.
  */
-async function resolveRequestedBuildVersion(
+export async function resolveRequestedBuildVersion(
   invocation: DesktopPackageInvocation,
   productVersion: string,
   environment: NodeJS.ProcessEnv,
@@ -331,7 +332,9 @@ async function resolveRequestedBuildVersion(
   return suggestDesktopBuildVersion({
     productVersion, target: invocation.target.name,
     // Machine presets own packaging, not upload credentials; local auto numbering uses existing artifacts.
-    environment: environment.DSH_PACKAGING_PRESET === undefined ? environment : {},
+    environment: environment.DSH_PACKAGING_PRESET === undefined ? environment : Object.fromEntries(
+      Object.entries(environment).filter(([name]) => name === 'DSH_BUILD_CLIENT_PROFILE' || name === 'DSH_CLIENT_BUILD_PROFILE'),
+    ),
     // Unsigned builds land beside the signed output, so numbering has to read the directory this run writes.
     artifactsRoot: desktopArtifactOutput(paths, invocation).directory,
   })
@@ -401,7 +404,7 @@ async function main(): Promise<void> {
   if (success && target.platform === 'darwin' && !invocation.directory && !invocation.prepareOnly) {
     const paths = desktopTargetBuildPaths(target.name)
     const output = desktopArtifactOutput(paths, invocation)
-    const filename = `deepseek-harness-${buildVersion}-mac-${target.arch}${output.suffix}.dmg`
+    const filename = `${desktopPackagingProduct(environment).artifactPrefix}-${buildVersion}-mac-${target.arch}${output.suffix}.dmg`
     console.log(`DMG: ${join(output.directory, filename)}`)
   }
 }
@@ -419,6 +422,7 @@ export async function packageTarget(
   run: ReturnType<typeof createPackagingRun> | undefined,
 ): Promise<void> {
   const { target } = invocation
+  assertDesktopProfilePackaging(environment, invocation.unsigned)
   const execute = (args: readonly string[], env: NodeJS.ProcessEnv, cwd: string = APP_ROOT) => runPnpm(args, env, cwd, run)
   const journal = target.platform === 'darwin' ? process.env.DSH_DESKTOP_PACKAGING_RUN_DIR : undefined
   const proxyEvent = (status: string) => { if (journal) recordPackagingEvent(journal, { type: 'notarization-proxy', status }) }
@@ -473,8 +477,10 @@ export async function packageTarget(
         { cwd: APP_ROOT, env: electronBuilderEnv, timeoutMs: 60_000 })
     })
   }
-  await execute(['run', 'build:official'], buildEnv, REPOSITORY_ROOT)
-  await execute(['run', 'release:pack', '--family', 'dsh', '--out', buildPaths.packedDsh, ...packArguments], buildEnv, REPOSITORY_ROOT)
+  const clientProfile = desktopPackagingProduct(environment).updatesEnabled ? 'official' : 'indus-orbit'
+  await execute(clientProfile === 'official' ? ['run', 'build:official'] : ['run', 'build', '--profile', clientProfile], buildEnv, REPOSITORY_ROOT)
+  await execute(['run', 'release:pack', '--family', 'dsh', ...(clientProfile === 'official' ? [] : ['--client-profile', clientProfile]),
+    '--out', buildPaths.packedDsh, ...packArguments], buildEnv, REPOSITORY_ROOT)
   await execute([
     '--dir',
     'apps/desktop-host',
