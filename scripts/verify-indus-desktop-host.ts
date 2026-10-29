@@ -109,12 +109,12 @@ try {
   assert.equal(received.upstreamAccountDisabled, true)
   assert.ok(Array.isArray(received.providers) && received.providers.includes('indus-orbit'))
   assert.equal(paidOperations, 1)
-  await writeFile(output, JSON.stringify({ date: '2026-10-28', state: 'Verified', builtHost: true,
+  await writeFile(output, JSON.stringify({ date: new Date().toISOString().slice(0, 10), state: 'Verified', builtHost: true,
     profile: 'desktop / indus-orbit', ...received, syntheticGatewayOperations: paidOperations,
     realProviderCalls: 0, originalAccountStateTouched: false, hostedCreditGrant: false }, null, 2)+'\n')
 } catch (error) {
   const message = error instanceof Error ? error.message : 'Unknown built Host error'
-  await writeFile(output, JSON.stringify({ date:'2026-10-28', state:'Partial', builtHost:false,
+  await writeFile(output, JSON.stringify({ date: new Date().toISOString().slice(0, 10), state:'Partial', builtHost:false,
     error: message.replace(/([?&](?:token|auth)=)[^\s&]+/g,'$1[redacted]').slice(0,1500),
     realProviderCalls:0, originalAccountStateTouched:false },null,2)+'\n')
   process.exitCode = 1

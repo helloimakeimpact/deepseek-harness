@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import yaml from 'js-yaml'
-import { valid } from 'semver'
-import { DESKTOP_RUNTIME_DEPENDENCY_OVERRIDES, DESKTOP_RUNTIME_PATCHES, type DesktopRuntimePatch } from './runtime-patch-policy.ts'
+import { satisfies, valid } from 'semver'
+import { DESKTOP_RUNTIME_DEPENDENCY_OVERRIDES, DESKTOP_RUNTIME_PATCHES, DESKTOP_RUNTIME_SECURITY_OVERRIDES, type DesktopRuntimePatch } from './runtime-patch-policy.ts'
 
 /** Expected patch bytes and package version for one independent installation. */
 export interface PreparedRuntimePatch {
@@ -100,6 +100,18 @@ export function verifyRuntimePatches(projectRoot: string, plan: PreparedRuntimeP
   const lock = yaml.load(readFileSync(join(projectRoot, 'pnpm-lock.yaml'), 'utf8')) as {
     patchedDependencies?: Record<string, string>
     packages?: Record<string, { version?: string }>
+  }
+  for (const [selector, patchedVersion] of Object.entries(DESKTOP_RUNTIME_SECURITY_OVERRIDES)) {
+    const separator = selector.lastIndexOf('@')
+    const name = selector.slice(0, separator)
+    const affected = selector.slice(separator + 1)
+    for (const [spec, entry] of Object.entries(lock.packages ?? {})) {
+      if (!spec.startsWith(`${name}@`)) continue
+      const version = entry.version ?? spec.slice(name.length + 1).split('(')[0]!
+      if (valid(version) === null || satisfies(version, affected)) {
+        throw new Error(`desktop dependencies: ${spec} requires reviewed ${name}@${patchedVersion} or a qualified successor`)
+      }
+    }
   }
   for (const patch of plan.patches) {
     if (!Object.keys(lock.packages ?? {}).some(spec => spec.startsWith(`${patch.name}@`))) {

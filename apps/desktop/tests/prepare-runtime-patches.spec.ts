@@ -8,12 +8,37 @@ import { afterEach, expect, it } from 'vitest'
 import yaml from 'js-yaml'
 import { pnpmCommand } from '../../../scripts/release/process.ts'
 import { prepareRuntimePatches, verifyRuntimePatches } from '../scripts/prepare-runtime-patches.ts'
-import type { DesktopRuntimePatch } from '../scripts/runtime-patch-policy.ts'
+import { DESKTOP_RUNTIME_SECURITY_OVERRIDES, type DesktopRuntimePatch } from '../scripts/runtime-patch-policy.ts'
 
 const roots: string[] = []
 const shared = { scope: 'shared', reason: 'Runtime fixture.' } as const
 const excluded = { scope: 'workspace-only', reason: 'Build fixture.' } as const
 const patch = 'diff --git a/value.txt b/value.txt\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-original\n+patched\n'
+
+it('ships the same reviewed dependency floors used by the source workspace', () => {
+  const { project } = fixture()
+  const repository = resolve(import.meta.dirname, '../../..')
+  prepareRuntimePatches(project, repository)
+  const source = yaml.load(readFileSync(join(repository, 'pnpm-workspace.yaml'), 'utf8')) as { overrides: Record<string, string> }
+  const target = yaml.load(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8')) as { overrides: Record<string, string> }
+  for (const [selector, version] of Object.entries(DESKTOP_RUNTIME_SECURITY_OVERRIDES)) {
+    expect(source.overrides[selector]).toBe(version)
+    expect(target.overrides[selector]).toBe(version)
+  }
+})
+
+it('refuses stale vulnerable versions in an independently resolved runtime lock', () => {
+  const { project } = fixture()
+  const plan = { patches: [], workspaceOnly: [] }
+  for (const spec of ['zod@4.4.3', 'undici@8.11.2', '@modelcontextprotocol/sdk@1.31.0', '@hono/node-server@1.19.17']) {
+    writeFileSync(join(project, 'pnpm-lock.yaml'), yaml.dump({ packages: { [spec]: {} } }))
+    expect(() => verifyRuntimePatches(project, plan)).toThrow('requires reviewed')
+  }
+  writeFileSync(join(project, 'pnpm-lock.yaml'), yaml.dump({ packages: {
+    'zod@4.6.6': {}, 'undici@8.12.2': {}, '@modelcontextprotocol/sdk@1.32.0': {}, '@hono/node-server@2.1.3': {},
+  } }))
+  expect(() => verifyRuntimePatches(project, plan)).not.toThrow()
+})
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 })
 })
