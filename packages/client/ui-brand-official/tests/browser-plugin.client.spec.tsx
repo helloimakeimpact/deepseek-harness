@@ -108,7 +108,7 @@ describe('official browser-brand plugin', () => {
     name.unmount()
     const mark = render(<IndusBrandMark size={34} className="host-placement" />)
     const image = mark.container.querySelector('img')
-    expect(image?.getAttribute('src')).toContain('indus-orbit-mark.png')
+    expect(image?.getAttribute('src')).toContain('io-harness-mark.png')
     expect(image?.getAttribute('width')).toBe('34')
     expect(image?.getAttribute('alt')).toBe('')
     expect(image?.classList.contains('host-placement')).toBe(true)

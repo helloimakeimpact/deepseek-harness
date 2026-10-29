@@ -20,6 +20,8 @@ concurrency:
 
 jobs:
 
+  # This owned public fork uses standard hosted Linux/Windows defaults with
+  # bounded worker counts. Explicit failover and upstream defaults are retained.
   # Three enterprise jobs isolate coverage, static analysis, and the
   # build-backed consumer tail. The consumer job owns the only Linux build so
   # all three jobs enter runner allocation independently.
@@ -46,11 +48,11 @@ jobs:
           || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "linux", "x64", "vm-backup"]')
-          || 'dsh-ubuntu-24-04-16core' }}
+          || (github.repository == 'helloimakeimpact/deepseek-harness' && 'ubuntu-24.04' || 'dsh-ubuntu-24-04-16core') }}
     name: node 24 / static
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
-      DSH_GATE_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
+      DSH_GATE_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
       # Stop the aggregate at the first blocking gate failure so a red run
       # does not keep burning enterprise runner time on the remaining gates.
       DSH_GATE_FAIL_FAST: '1'
@@ -113,13 +115,13 @@ jobs:
           || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "linux", "x64", "vm-backup"]')
-          || 'dsh-ubuntu-24-04-16core' }}
+          || (github.repository == 'helloimakeimpact/deepseek-harness' && 'ubuntu-24.04' || 'dsh-ubuntu-24-04-16core') }}
     name: node 24 / coverage
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
-      DSH_COVERAGE_MAX_WORKERS: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '6' || '' }}
-      DSH_COVERAGE_PARTITIONS: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}
-      DSH_GATE_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '3' || '' }}
+      DSH_COVERAGE_MAX_WORKERS: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '6' || '' }}
+      DSH_COVERAGE_PARTITIONS: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '1' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}
+      DSH_GATE_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '1' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '3' || '' }}
       # Managed-scope teardown cases run past the default per-test budget when
       # this lane's partitions, workers, and sibling gates share one host: the
       # disposal cases in subprocess-local and bash-sandbox exceeded 5000ms on
@@ -270,15 +272,15 @@ jobs:
           || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "linux", "x64", "vm-backup"]')
-          || 'dsh-ubuntu-24-04-16core' }}
+          || (github.repository == 'helloimakeimpact/deepseek-harness' && 'ubuntu-24.04' || 'dsh-ubuntu-24-04-16core') }}
     name: node 24 / snapshots and artifacts
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
-      DSH_GATE_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '10' || '' }}
-      DSH_OXLINT_THREADS: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
-      DSH_PUBLINT_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
+      DSH_GATE_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '10' || '' }}
+      DSH_OXLINT_THREADS: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
+      DSH_PUBLINT_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
       DSH_WEB_SNAPSHOT_WORKERS: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '6' || '' }}
-      DSH_SNAPSHOT_MAX_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '12' || '' }}
+      DSH_SNAPSHOT_MAX_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '12' || '' }}
       DSH_NODE_COMPAT_SKIP_TYPECHECK: '1'
       # A failing gate aborts its running siblings: a failing build stops the
       # independent Node compatibility smoke, and a failing reader (e.g.
@@ -535,10 +537,11 @@ jobs:
           || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "dsh-win-ci", "windows"]')
-          || 'dsh-windows-2025-16core' }}
+          || (github.repository == 'helloimakeimpact/deepseek-harness' && 'windows-2025' || 'dsh-windows-2025-16core') }}
     name: windows node 24 / build & observational
     timeout-minutes: 60
     env:
+      DSH_GATE_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || '' }}
       # A failing build or site aborts the sibling gate on the same runner.
       DSH_GATE_FAIL_FAST: '1'
     steps:
@@ -588,7 +591,7 @@ jobs:
         shell: pwsh
         env:
           DSH_GATE_FAIL_FAST: ''
-          DSH_PUBLINT_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
+          DSH_PUBLINT_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}
         run: pnpm run check:ci:windows-observational-ready
       - name: Report Windows observational failures
         continue-on-error: true
@@ -606,14 +609,14 @@ jobs:
           || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "dsh-win-ci", "windows"]')
-          || 'dsh-windows-2025-16core' }}
+          || (github.repository == 'helloimakeimpact/deepseek-harness' && 'windows-2025' || 'dsh-windows-2025-16core') }}
     name: windows node 24 / coverage
     timeout-minutes: 120
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
-      DSH_COVERAGE_MAX_WORKERS: ${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '6' || '' }}
-      DSH_COVERAGE_PARTITIONS: ${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}
-      DSH_GATE_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '3' || '' }}
+      DSH_COVERAGE_MAX_WORKERS: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '6' || '' }}
+      DSH_COVERAGE_PARTITIONS: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '1' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}
+      DSH_GATE_CONCURRENCY: ${{ github.repository == 'helloimakeimpact/deepseek-harness' && '1' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '3' || '' }}
       DSH_COVERAGE_TEST_TIMEOUT_MS: '90000'
       # A gate failure aborts the sibling gate instead of waiting out its
       # multi-minute instrumented run.
@@ -684,7 +687,7 @@ jobs:
           || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "dsh-win-ci", "windows"]')
-          || 'dsh-windows-2025-16core' }}
+          || (github.repository == 'helloimakeimpact/deepseek-harness' && 'windows-2025' || 'dsh-windows-2025-16core') }}
     name: windows node 24 / native tests
     timeout-minutes: 60
     steps:

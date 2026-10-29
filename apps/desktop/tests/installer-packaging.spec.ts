@@ -77,7 +77,7 @@ describe('installer preparation preserves application dependencies', () => {
     expect(config.artifactName).toBe('deepseek-harness-${version}-${os}-${arch}-unsigned.${ext}')
   })
 
-  it('packages every preload entry point the shell loads', async () => {
+  it.each([['official', 'darwin', 'arm64'], ['indus-orbit', 'darwin', 'arm64'], ['indus-orbit', 'darwin', 'x64'], ['indus-orbit', 'win32', 'x64']] as const)('packages every preload entry point for %s on %s/%s', async (profile, platform, arch) => {
     const { readdirSync, readFileSync } = await import('node:fs')
     const sourceDirectory = new URL('../src/', import.meta.url)
     const referenced = new Set<string>()
@@ -88,6 +88,10 @@ describe('installer preparation preserves application dependencies', () => {
     expect(referenced.size).toBeGreaterThan(0)
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     const config = createElectronBuilderConfig({
+      DSH_BUILD_CLIENT_PROFILE: profile,
+      DSH_DESKTOP_TARGET_PLATFORM: platform,
+      DSH_DESKTOP_TARGET_ARCH: arch,
+      DSH_DESKTOP_UNSIGNED: profile === 'indus-orbit' ? '1' : '0',
       DSH_DESKTOP_APP_ID: 'com.example.installer',
       DSH_DESKTOP_AUTO_UPDATE_ENV: 'production',
       DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://harness-test.deepseek.com',
@@ -95,7 +99,7 @@ describe('installer preparation preserves application dependencies', () => {
       DSH_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)',
       DSH_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234',
       APPLE_KEYCHAIN_PROFILE: 'installer-test',
-    }, 'darwin', 'arm64')
+    }, platform, arch)
     const packaged = new Set(config.files.filter((entry): entry is string => typeof entry === 'string'))
     for (const name of referenced) expect(packaged.has(`lib/${name}`)).toBe(true)
   })

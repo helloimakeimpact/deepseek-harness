@@ -30,7 +30,7 @@ Desktop 在原生应用中运行 Harness 工作区。本参考文档说明应用
 
 ## 应用概览
 
-`indus-orbit` 构建选择 I/O Harness 预览身份。其原生文件名为 `IO Harness`，协议为 `io-ws`，本地预览标识符为 `local.indusorbit.workstation.preview`。旧 `IO W-S` Electron 数据目录及独立持久 Harness 主目录保持稳定，避免品牌更名影响本地数据。打包预览在 Host 启动前要求 Indus Orbit 身份，并禁用上游账户身份，同时保留显式的直接密钥与 pi-ai 提供方选择。自有 I/O 提供方通过私有主进程代理及独立的工作区额度授权连接；配置详见预览参考。显式设置 `DSH_HOME` 可覆盖 Harness 主目录。签名打包、上游更新源及上传均被拒绝；参见[分支预览参考](../../docs/indus-orbit-terminal-preview.zh.md)。本参考其余内容描述上游 `official` 配置。
+`indus-orbit` 构建选择 I/O Harness 预览身份。其原生文件名为 `IO Harness`，协议为 `io-ws`，本地预览标识符为 `local.indusorbit.workstation.preview`。旧 `IO W-S` Electron 数据目录及独立持久 Harness 主目录保持稳定，避免品牌更名影响本地数据。原生预览标志为 `[H]`，右上角配有小型现有 I/O 标志。登录窗口在读取主进程状态前从隔离的 preload 加载本地化标签；IPC 失败时禁用登录并显示恢复说明。preload 失败由原生进程报告。打包预览在 Host 启动前要求 Indus Orbit 身份，并禁用上游账户身份，同时保留显式的直接密钥与 pi-ai 提供方选择。自有 I/O 提供方通过私有主进程代理及独立的工作区额度授权连接；配置详见预览参考。显式设置 `DSH_HOME` 可覆盖 Harness 主目录。签名打包、上游更新源及上传均被拒绝；参见[分支预览参考](../../docs/indus-orbit-terminal-preview.zh.md)。本参考其余内容描述上游 `official` 配置。
 
 Indus Orbit Host 从 Desktop 运行时软件包的依赖闭包解析插件，并在 profile 重载时保留 I/O 默认模型。显式 profile 或 home 模型选择优先。在 Indus Orbit 构建完成后，使用 `node --import tsx/esm scripts/verify-indus-desktop-host.ts --runtime <primary-runtime directory> --receipt <output JSON>` 运行无密钥的内置 Host 检查；它仅使用临时 profile 和合成推理。
 
@@ -99,6 +99,8 @@ macOS PNG 使用带留白的圆角底板，供传统 ICNS 打包使用，包含�
 ### 内置工作区依赖
 
 electron-builder 只把清单中的 `dependencies` 复制进 `app.asar/node_modules`，因此 Electron 主进程 bundle `lib/main.js` 内联其工作区 devDependencies，裸导入只剩 `electron`、Node 内置模块与这些 `dependencies`；沙箱 preload 只能留下 `electron`、`events`、`timers` 与 `url`，即其 `require` polyfill 能解析的模块。主进程 bundle 从被内联包的 `lib/` 产物解析它们，所以根 `build:lib:host` 在并发的工作区 tsdown 阶段之后才为 `apps/desktop` 打 bundle，并由 [`desktop-bundle-imports`](scripts/desktop-bundle-imports.mjs) 让任何静态、动态或 `require()` 导入无法在打包应用内解析的 Desktop bundle 直接失败。没有这项检查时，rolldown 无法解析的导入会作为外部说明符进入产物，并在启动时以 `ERR_MODULE_NOT_FOUND` 失败。[已归档的bundle 顺序决策](../../.agents/notes/archived/process/2026-09-22-desktop-main-bundle-after-workspace-tsdown.md)记录了备选方案。
+
+Desktop 准备阶段在物化前对独立解析的生产 npm 依赖图执行所有严重级别的审计；注册表失败或锁文件变化都会终止准备。审计后的解析字节保留为 `dependency-lock.yaml`。最终 `dependency-inventory.json` 记录审计时间、锁文件摘要、已安装软件包的名称/版本/路径及最终清单哈希，包括别名和嵌套 `node_modules`。命中已审核受影响范围的版本（含该范围内的预发布版本）、无效清单和软件包目录链接都会拒绝物化树。运行时封存包含此清单的字节。分支的无密钥 Host 检查提供私有的未获额度授权连接，并拒绝推理尝试；它们不授权工作区支出。这仅验证 npm 依赖元数据，不代表随附 Python、原生二进制、签名或整个安装器已通过验收。
 
 Windows 签名打包按 PE 文件内容扫描第一方运行时和应用生产依赖，包括没有常规扩展名的文件。最终扫描覆盖整个解包应用。目录链接、格式错误的 `MZ` 文件以及非 PE 的 `.exe`、`.dll` 或 `.pyd` 文件会使打包停止；以 `MZ` 开头的数据文件也会被拒绝，除非包含有效 PE 头。它保留有效的上游签名，并在记录运行时哈希或执行冒烟检查前为未签名代码补签。公钥验签每个进程处理最多 32 个文件，同时最多运行四个进程；硬件令牌签名仍串行执行，每个新签名必须匹配配置的证书且带时间戳。硬件签名或验签失败会停止本轮执行；独立的时间戳请求遵循[有界重试规则](windows-signing/README.zh.md#windows-ev-signing)。electron-builder 只有在验签和逐字节比对通过后，才保留复制后运行时可执行文件的签名。写入发布完成记录前，必须通过最终 PE 签名检查，以及使用全新缓存的 ASAR 载荷和 Host 冒烟检查。开发、仅准备和未签名构建不使用硬件令牌，可能被 Windows 代码完整性策略阻止；任何构建模式都不会关闭该策略。冒烟检查通过不代表兼容所有企业策略。
 

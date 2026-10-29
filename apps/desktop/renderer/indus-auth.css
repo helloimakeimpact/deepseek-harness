@@ -1,8 +1,10 @@
 :root { color-scheme: light dark; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color: #24263f; background: #faf9f4; }
 body { margin: 0; }
 body::before { content: ""; position: fixed; width: 160px; height: 160px; right: 12px; bottom: 12px; background: url("assets/woven-portal.svg") center / contain no-repeat; opacity: .14; pointer-events: none; }
-main { position: relative; max-width: 380px; padding: 48px 32px; margin: auto; text-align: center; }
-img { image-rendering: pixelated; }
+main { position: relative; max-width: 380px; padding: 32px; margin: auto; text-align: center; }
+img { display: block; margin: auto; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.powered-by { margin: 8px 0; font-size: 12px; }
 h1 { font-size: 50px; letter-spacing: -.04em; margin: 16px 0 0; }
 p { font-size: 14px; line-height: 1.7; }
 .expansion { margin-top: 0; font-weight: 600; }

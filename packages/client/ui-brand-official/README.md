@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This fork gives an `indus-orbit` client build the uppercase I/O pixel mark in the sidebar and conversation hero, with a dominant H wordmark, its Harness expansion and the Indus Orbit Foundation identity. The `official` profile retains DeepSeek Harness branding; unselected profiles retain shell fallbacks. This package has no runtime state and does not affect model requests.
+This fork gives an `indus-orbit` client build the `[H]` mark with the existing pixel I/O signature in its upper right in the sidebar and conversation hero, with a dominant H wordmark, its Harness expansion and the Indus Orbit Foundation identity. The `official` profile retains DeepSeek Harness branding; unselected profiles retain shell fallbacks. This package has no runtime state and does not affect model requests.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ The shipped Web bundle mounts this plugin. The named `DSH_BUILD_CLIENT_PROFILE=i
 
 ### Choosing the profile
 
-`DSH_CLIENT_BUILD_PROFILE` selects the occupants. `indus-orbit` fills the sidebar mark/name and hero mark together. Its code-rendered uppercase I/O raster master stays static, and the conversation locale owns the approved English line in both interface languages. `official` fills only the upstream sidebar; other values register no occupants. The plugin validates in every profile.
+`DSH_CLIENT_BUILD_PROFILE` selects the occupants. `indus-orbit` fills the sidebar mark/name and hero mark together. Its code-rendered `[H]` raster master with the owned I/O signature stays static, and the conversation locale owns the approved English line in both interface languages. `official` fills only the upstream sidebar; other values register no occupants. The plugin validates in every profile.
 
 ### Replacing the brand
 

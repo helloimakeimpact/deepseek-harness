@@ -19,7 +19,7 @@
 
 上游基线是 [dsh-v0.2.1-rc.3](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.3)，于 2026 年 10 月 27 日获取。这是带有本地分支修改的上游候选发行版。先前的 rc.2 检出及其未提交文件已另行保留；它不是当前 Harness 源码。
 
-`indus-orbit` 客户端构建采用大写像素 I/O 标志、醒目的 H 字标、Harness 全称及 Indus Orbit 基金会身份。自有栅格标志由矢量几何图形渲染。[品牌填充包](../packages/client/ui-brand-official/README.zh.md)通过现有插槽填充侧栏和会话首屏。会话处理、工具、插件及智能体循环保留上游架构。
+`indus-orbit` 客户端构建采用右上角配有现有像素 I/O 图案的 `[H]` 标志、醒目的 H 字标、Harness 全称及 Indus Orbit 基金会身份。自有栅格标志由矢量几何图形渲染。[品牌填充包](../packages/client/ui-brand-official/README.zh.md)通过现有插槽填充侧栏和会话首屏。会话处理、工具、插件及智能体循环保留上游架构。
 
 <a id="local-build"></a>
 ## 本地构建

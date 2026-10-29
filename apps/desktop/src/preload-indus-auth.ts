@@ -1,12 +1,16 @@
 /** Renderer-safe native identity commands; tokens remain in the Electron main process. */
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IndusAuthState } from './indus-auth.ts'
-import type { indusAuthCopy } from './indus-auth-window.ts'
+import { indusAuthCopy } from './indus-auth-copy.ts'
+
+const localePrefix = '--indus-auth-locale='
+const locale = process.argv.find(argument => argument.startsWith(localePrefix))?.slice(localePrefix.length)
+if (locale === undefined) throw new Error('Indus sign-in: missing window locale')
 
 contextBridge.exposeInMainWorld('indusIdentity', {
+  copy: indusAuthCopy(locale),
   read: () =>
     ipcRenderer.invoke('indus-identity:read') as Promise<{
-      copy: ReturnType<typeof indusAuthCopy>
       state: IndusAuthState
     }>,
   start: () => ipcRenderer.invoke('indus-identity:start') as Promise<IndusAuthState>,

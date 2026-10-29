@@ -3,6 +3,7 @@
 import { resolveMacOSSignatureCacheDirectory } from './macos-signature-cache-directory.mjs'
 import { packagingStep } from './packaging-step.mjs'
 import { spawn } from 'node:child_process'
+import { writeDesktopDependencyInventory } from './runtime-dependency-inventory.ts'
 import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { delimiter, join, relative, resolve } from 'node:path'
@@ -132,6 +133,14 @@ async function main(): Promise<void> {
       readDesktopCorePackageSet(BUILD_ROOT, release.version),
     )
     await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:install', () => runPnpm(['install', '--prod', '--frozen-lockfile', '--trust-lockfile']))
+    const dependencyAudit = await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:audit-dependencies', async () => {
+      const lock = readFileSync(join(BUILD_ROOT, 'pnpm-lock.yaml'))
+      await runPnpm(['audit', '--prod', '--audit-level=info'])
+      if (!readFileSync(join(BUILD_ROOT, 'pnpm-lock.yaml')).equals(lock)) {
+        throw new Error('desktop dependencies: lockfile changed during the registry audit')
+      }
+      return { completedAt: new Date().toISOString(), lock }
+    })
     const packageSet = readDesktopCorePackageSet(BUILD_ROOT, release.version)
     const targetName = resolveDesktopBuildTarget()
     const target = { platform: process.platform, arch: desktopTargetPlatform(targetName).arch }
@@ -163,6 +172,7 @@ async function main(): Promise<void> {
       await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'sign:primary-native', () => signMacOSRuntime(join(RUNTIME_ROOT, 'primary-runtime'), resolveDesktopAppId(process.env), resolveMacOSSigningEnvironment(process.env), target.arch, cacheDirectory, 'primary'))
     }
     await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:manifests', () => prepareRuntimeManifests(DSH_OUTPUT_ROOT))
+    await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:dependency-inventory', async () => writeDesktopDependencyInventory(DSH_OUTPUT_ROOT, dependencyAudit, target))
     await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:primary-smoke', async () => smokePrimaryRuntime(join(RUNTIME_ROOT, 'primary-runtime')))
     await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:write-descriptor', async () => writeDesktopRuntime(DSH_OUTPUT_ROOT, release, packageSet.packages.map(entry => entry.name), target))
     const descriptor = await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'runtime:verify-before-smoke', () => verifyDesktopRuntime(DSH_OUTPUT_ROOT, release.version, target))

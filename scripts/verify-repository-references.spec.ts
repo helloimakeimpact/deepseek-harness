@@ -116,6 +116,21 @@ describe('maintained repository reference policy', () => {
       .toEqual([{ file: receipt, line: 3, kind: 'organization-url' }])
   })
 
+  it.each([
+    'docs/indus-orbit-security-verification-2026-10-29.json',
+    'docs/indus-orbit-runtime-qualification-2026-10-29.json',
+  ])('retains exact parent evidence only in the declared receipt field: %s', (file) => {
+    const commit = '0123456789abcdef0123456789abcdef01234567'
+    const commits = new Set([commit])
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceParent: commit }, null, 2), commits)).toEqual([])
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceParent: commit, note: commit }, null, 2), commits))
+      .toEqual([{ file, line: 3, kind: 'commit-hash' }])
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceBase: commit }, null, 2), commits)).toHaveLength(1)
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceParent: commit.slice(0, 7) }, null, 2), new Set([commit.slice(0, 7)])))
+      .toHaveLength(1)
+    expect(findRepositoryReferences('docs/unrelated.json', JSON.stringify({ sourceParent: commit }, null, 2), commits)).toHaveLength(1)
+  })
+
   it('permits only the independent kit repository and its source URLs', () => {
     for (const suffix of ['', '.git', '/tree/main/packages/entry']) {
       expect(findRepositoryReferences('package.json', `${organizationUrl}/libreoffice-kit${suffix}`, new Set())).toEqual([])

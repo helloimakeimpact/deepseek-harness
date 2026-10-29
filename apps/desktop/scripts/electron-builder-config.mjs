@@ -141,6 +141,7 @@ export function createElectronBuilderConfig(
       'lib/main.js',
       'lib/welcome/**/*',
       'lib/preload-app.cjs',
+      'lib/preload-indus-auth.cjs',
       'lib/preload-mandatory.cjs',
       'lib/preload-platform-account.cjs',
       'lib/preload-update-dialog.cjs',
@@ -156,12 +157,12 @@ export function createElectronBuilderConfig(
     asarUnpack: unpack,
     extraResources: [
       { from: buildPaths.runtime, to: 'runtime' },
-      { from: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-windows.png' : '../resources/indus-orbit-mark.png', import.meta.url)), to: 'icon.png' },
+      { from: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-windows.png' : '../resources/io-harness-mark.png', import.meta.url)), to: 'icon.png' },
       // Windows tray bitmaps; macOS keeps the Dock and ships no menu bar icon.
-      ...(packagesWindows ? [{ from: fileURLToPath(new URL(product.updatesEnabled ? '../resources/tray-windows.ico' : '../resources/indus-orbit-mark.png', import.meta.url)), to: product.updatesEnabled ? 'tray.ico' : 'tray.png' }] : []),
+      ...(packagesWindows ? [{ from: fileURLToPath(new URL(product.updatesEnabled ? '../resources/tray-windows.ico' : '../resources/io-harness-mark.png', import.meta.url)), to: product.updatesEnabled ? 'tray.ico' : 'tray.png' }] : []),
     ],
     mac: {
-      icon: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-macos.png' : '../resources/indus-orbit-mark.png', import.meta.url)),
+      icon: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-macos.png' : '../resources/io-harness-mark.png', import.meta.url)),
       category: 'public.app-category.developer-tools',
       // macOS matches the application locale against this bundle, not Electron Framework resources.
       // Ad-hoc signing keeps the modified Electron executable runnable without a Developer ID.
@@ -240,7 +241,7 @@ export function createElectronBuilderConfig(
       )
     },
     win: {
-      icon: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-windows.png' : '../resources/indus-orbit-mark.png', import.meta.url)),
+      icon: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-windows.png' : '../resources/io-harness-mark.png', import.meta.url)),
       forceCodeSigning: !unsigned,
       signtoolOptions: {
         sign: windowsSigner,

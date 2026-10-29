@@ -9,6 +9,7 @@ import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import { readPrimaryRuntime, workspaceDependencyPaths } from '../../../packages/skill/tool-workspace-dependencies/src/index.ts'
 import { DesktopHostProcess } from '../src/host-process.ts'
+import { createDesktopSmokeModelBroker } from './smoke-model-broker.ts'
 import { createPluginProfile } from '../src/project-manager.ts'
 import type { DesktopRuntimeDescriptor } from '../src/runtime-tree.ts'
 
@@ -26,7 +27,7 @@ export async function smokeDesktopRuntime(
 ): Promise<void> {
   const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-smoke-'))
   const profile = join(home, 'profiles', 'desktop')
-  const hostEnvironment = {
+  const hostEnvironment: NodeJS.ProcessEnv = {
     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !/^(?:npm|pnpm|corepack)_/iu.test(name))),
     DSH_HOME: home, HOME: home, USERPROFILE: home,
     XDG_CONFIG_HOME: home, XDG_CACHE_HOME: home, XDG_STATE_HOME: home,
@@ -34,9 +35,11 @@ export async function smokeDesktopRuntime(
     npm_config_userconfig: join(home, 'npmrc'), npm_config_globalconfig: join(home, 'npmrc'),
     npm_config_store_dir: join(home, 'store'), npm_config_enable_global_virtual_store: 'false',
   }
+  const modelSmoke = createDesktopSmokeModelBroker(hostEnvironment.DSH_CLIENT_BUILD_PROFILE)
   const host = new DesktopHostProcess(node, root, profile, undefined, hostEnvironment,
     undefined, join(resourcesRuntime, 'primary-runtime'),
-    { pnpm: join(resourcesRuntime, 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'), nodeBin: join(resourcesRuntime, 'bin') })
+    { pnpm: join(resourcesRuntime, 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'), nodeBin: join(resourcesRuntime, 'bin') },
+    undefined, modelSmoke === undefined ? undefined : () => modelSmoke.broker.start())
   let timer: ReturnType<typeof setTimeout> | undefined
   try {
     writeFileSync(join(home, 'npmrc'), '')
@@ -188,7 +191,10 @@ export function apply(ctx) {
   } finally {
     clearTimeout(timer)
     try { await host.stop() } finally {
-      await rm(home, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 })
+      try { await modelSmoke?.broker.close() } finally {
+        await rm(home, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 })
+      }
     }
   }
+  modelSmoke?.assertNoInference()
 }

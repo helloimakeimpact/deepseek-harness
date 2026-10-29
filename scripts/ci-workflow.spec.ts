@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest'
 
 function evaluateRunsOn(selector: unknown, context: Record<string, unknown>): unknown {
   if (typeof selector !== 'string') throw new TypeError('Runner selector must be a string')
-  return runInNewContext(selector.trim().slice(3, -2), context, { timeout: 1000 })
+  return runInNewContext(selector.trim().slice(3, -2), {
+    ...context, github: { ...(isRecord(context.github) ? context.github : {}) },
+  }, { timeout: 1000 })
 }
 
 const root = resolve(import.meta.dirname, '..')
@@ -384,7 +386,7 @@ describe('CI workflow', () => {
     }
 
     expect(windowsCoverage.name).toBe('windows node 24 / coverage')
-    expect(windowsCoverage.env).toMatchObject({ DSH_COVERAGE_PARTITIONS: "${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}" })
+    expect(windowsCoverage.env).toMatchObject({ DSH_COVERAGE_PARTITIONS: "${{ github.repository == 'helloimakeimpact/deepseek-harness' && '1' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}" })
     const coverageSteps = windowsCoverage.steps as unknown[]
     const coverageCommands = coverageSteps.filter((step): step is Record<string, unknown> & { run: string } => (
       isRecord(step) && typeof step.run === 'string'
@@ -421,7 +423,7 @@ describe('CI workflow', () => {
       'timeout-minutes': 15,
       env: {
         DSH_GATE_FAIL_FAST: '',
-        DSH_PUBLINT_CONCURRENCY: "${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}",
+        DSH_PUBLINT_CONCURRENCY: "${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}",
       },
     })
     expect(observational?.if).toBeUndefined()
@@ -1380,7 +1382,9 @@ describe('Issue lifecycle workflow', () => {
     expect(preflightStep?.run).toContain('if [ -f .github/issue-management/selective-preflight.json ]; then')
     expect(preflightStep?.run).toContain('node .github/issue-management/policy.mjs pr-preflight')
     expect(preflightStep?.if).toBeUndefined()
-    expect(policyJob.if).toBeUndefined()
+    expect(policyJob.if).toBe("${{ github.repository == 'deepseek-ai/deepseek-harness' }}")
+    expect(evaluateRunsOn(policyJob.if, { github: { repository: 'helloimakeimpact/deepseek-harness' } })).toBe(false)
+    expect(evaluateRunsOn(policyJob.if, { github: { repository: 'deepseek-ai/deepseek-harness' } })).toBe(true)
     expect(validateStep?.if).toBe("${{ steps.preflight.outputs.legacy-automated != 'true' }}")
 
     expect(tokenStep).toMatchObject({

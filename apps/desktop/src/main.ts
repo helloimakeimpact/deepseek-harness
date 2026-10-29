@@ -61,7 +61,8 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
-import { requireIndusIdentity, indusAuthCopy } from './indus-auth-window.ts'
+import { requireIndusIdentity } from './indus-auth-window.ts'
+import { indusAuthCopy } from './indus-auth-copy.ts'
 import { IndusModelBroker } from './indus-model-broker.ts'
 import { desktopProduct } from './product.ts'
 
@@ -965,7 +966,7 @@ async function main(): Promise<void> {
     updates.dispose()
   })
 
-  const applicationIconPath = development ? join(app.getAppPath(), 'resources', product.updatesEnabled ? 'icon-windows.png' : 'indus-orbit-mark.png')
+  const applicationIconPath = development ? join(app.getAppPath(), 'resources', product.updatesEnabled ? 'icon-windows.png' : 'io-harness-mark.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
     applicationName: product.displayName,
@@ -1027,7 +1028,7 @@ async function main(): Promise<void> {
   }
   refreshApplicationMenu()
   const trayIconPath = development
-    ? join(app.getAppPath(), 'resources', product.updatesEnabled ? 'tray-windows.ico' : 'indus-orbit-mark.png')
+    ? join(app.getAppPath(), 'resources', product.updatesEnabled ? 'tray-windows.ico' : 'io-harness-mark.png')
     : join(process.resourcesPath, product.updatesEnabled ? 'tray.ico' : 'tray.png')
   if (process.platform === 'win32') {
     // The tray is the way back to a hidden window; without it, relaunching the application still focuses it.

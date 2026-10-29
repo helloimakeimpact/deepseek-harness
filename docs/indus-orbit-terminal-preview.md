@@ -19,7 +19,7 @@ This reference defines I/O Harness (I/O H), the Indus Orbit fork of DeepSeek Har
 
 The upstream base is [dsh-v0.2.1-rc.3](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.3), fetched on 27 October 2026. This is an upstream release candidate with local fork changes. The previous rc.2 checkout and its dirty files remain preserved separately; it is not the active Harness source.
 
-The `indus-orbit` client build uses the uppercase pixel I/O mark, a dominant H wordmark, the Harness expansion and Indus Orbit Foundation identity. Owned raster marks are rendered from the vector geometry. The [brand occupant package](../packages/client/ui-brand-official/README.md) fills the sidebar and conversation hero through existing slots. Session handling, tools, plugins and the agent loop keep the upstream architecture.
+The `indus-orbit` client build uses the bracketed `[H]` mark with the existing pixel I/O artwork as an upper-right signature, a dominant H wordmark, the Harness expansion and Indus Orbit Foundation identity. Owned raster marks are rendered from the vector geometry. The [brand occupant package](../packages/client/ui-brand-official/README.md) fills the sidebar and conversation hero through existing slots. Session handling, tools, plugins and the agent loop keep the upstream architecture.
 
 <a id="local-build"></a>
 ## Local build

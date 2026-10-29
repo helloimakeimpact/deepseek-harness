@@ -41,8 +41,10 @@ function isMaintained(file: string): boolean {
 function recordedSourceCommit(file: string, source: string): { key: string; value: string } | undefined {
   const receipt = file === 'docs/indus-orbit-local-verification-2026-10-22.json'
     || file === 'docs/indus-orbit-workstation-verification-2026-10-27.json'
+  const parentReceipt = file === 'docs/indus-orbit-security-verification-2026-10-29.json'
+    || file === 'docs/indus-orbit-runtime-qualification-2026-10-29.json'
   const proposal = file === 'docs/indus-orbit-terminal-distribution.proposal.json'
-  if (!receipt && !proposal) return undefined
+  if (!receipt && !parentReceipt && !proposal) return undefined
   let document: unknown
   try { document = JSON.parse(source) }
   catch (_invalidEvidence) {
@@ -52,9 +54,10 @@ function recordedSourceCommit(file: string, source: string): { key: string; valu
   if (typeof document !== 'object' || document === null) return undefined
   const upstream = 'upstream' in document ? document.upstream : undefined
   const value = receipt && 'sourceBase' in document ? document.sourceBase
-    : proposal && typeof upstream === 'object' && upstream !== null && 'commit' in upstream ? upstream.commit : undefined
+    : parentReceipt && 'sourceParent' in document ? document.sourceParent
+      : proposal && typeof upstream === 'object' && upstream !== null && 'commit' in upstream ? upstream.commit : undefined
   return typeof value === 'string' && /^[a-f0-9]{40}$/u.test(value)
-    ? { key: receipt ? 'sourceBase' : 'commit', value } : undefined
+    ? { key: receipt ? 'sourceBase' : parentReceipt ? 'sourceParent' : 'commit', value } : undefined
 }
 
 /**

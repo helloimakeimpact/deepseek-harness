@@ -1,13 +1,13 @@
 import type { HeroBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { SidebarBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import mark from './indus-orbit-mark.png'
+import mark from './io-harness-mark.png'
 import { indusOrbitBrand } from './locales.ts'
 import css from './IndusBrand.module.css'
 
 type IndusBrandMarkProps = HeroBrandMarkOwnerProps & SidebarBrandMarkOwnerProps
 
 /**
- * Render the uppercase I/O pixel master without the shell's fish animation.
+ * Render the bracketed H master with the owned I/O signature in its upper right.
  * @param props - Host-supplied dimensions and placement class.
  * @returns decorative artwork paired with visible product text.
  */

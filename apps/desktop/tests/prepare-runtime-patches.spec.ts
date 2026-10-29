@@ -30,14 +30,14 @@ it('ships the same reviewed dependency floors used by the source workspace', () 
 it('refuses stale vulnerable versions in an independently resolved runtime lock', () => {
   const { project } = fixture()
   const plan = { patches: [], workspaceOnly: [] }
-  for (const spec of ['zod@4.4.3', 'undici@8.11.2', '@modelcontextprotocol/sdk@1.31.0', '@hono/node-server@1.19.17']) {
+  for (const spec of ['zod@4.4.3', 'zod@4.6.6-beta.1', 'undici@8.11.2', '@modelcontextprotocol/sdk@1.31.0', '@hono/node-server@1.19.17']) {
     writeFileSync(join(project, 'pnpm-lock.yaml'), yaml.dump({ packages: { [spec]: {} } }))
-    expect(() => verifyRuntimePatches(project, plan)).toThrow('requires reviewed')
+    expect(() => { verifyRuntimePatches(project, plan) }).toThrow('requires reviewed')
   }
   writeFileSync(join(project, 'pnpm-lock.yaml'), yaml.dump({ packages: {
     'zod@4.6.6': {}, 'undici@8.12.2': {}, '@modelcontextprotocol/sdk@1.32.0': {}, '@hono/node-server@2.1.3': {},
   } }))
-  expect(() => verifyRuntimePatches(project, plan)).not.toThrow()
+  expect(() => { verifyRuntimePatches(project, plan) }).not.toThrow()
 })
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 })
@@ -72,7 +72,8 @@ it('classifies the current workspace and shares only runtime patch bytes', () =>
   const settings = yaml.load(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8')) as { overrides: Record<string, string> }
   expect(settings.overrides['@earendil-works/pi-ai']).toBeUndefined()
   expect(settings.overrides['@earendil-works/pi-ai@^1.1.0']).toBe('1.1.0')
-  expect(readFileSync(join(repository, 'pnpm-lock.yaml'))).toEqual(before)
+  // Native byte equality avoids a per-element matcher walk over the large workspace lock.
+  expect(readFileSync(join(repository, 'pnpm-lock.yaml')).equals(before)).toBe(true)
 })
 
 it('does not infer version overrides from selected patches', () => {

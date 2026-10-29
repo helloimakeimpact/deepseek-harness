@@ -177,9 +177,8 @@ export function Welcome({ api }: { api: WelcomeApi }) {
     <main className="welcome" aria-labelledby={heading}>
       {process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit'
         ? <div className="workstation-brand" aria-label={m.welcomeBrand}>
-          <img src="assets/indus-orbit-mark.png" alt="" width="56" height="56" />
-          <div><span className="workstation-wordmark"><small>I/O</small><strong>H</strong></span>
-            <span className="workstation-expansion">{m.welcomeWorkstation}</span>
+          <img src="assets/io-harness-mark.svg" alt="" width="56" height="56" />
+          <div><span className="workstation-expansion">{m.welcomeWorkstation}</span>
             <span className="workstation-foundation">{m.welcomeFoundation}</span></div>
         </div>
         : <img className="brand" src="assets/welcome-brand.svg" alt={m.welcomeBrand} width="472" height="40" />}
