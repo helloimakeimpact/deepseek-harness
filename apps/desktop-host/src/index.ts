@@ -21,15 +21,16 @@ async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
   const projectDir = process.argv[3] as string
   installOfficeEngineResolution(runtimeDir)
-  const installAnchor = join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh', 'package.json')
+  const installAnchor = join(runtimeDir, 'package.json')
   const profile = loadProfileDirectory('dsh', projectDir, installAnchor)
-  if (process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit')
-    profile.patches.unshift({ id: 'agent-default-model', config: { provider: 'indus-orbit', model: 'io/harness-primary' } })
   reportSkippedBundles('dsh', profile)
   const application = runProfile({
     environment: loadLayeredEnv('dsh'),
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
+    defaultPatches: process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit'
+      ? [{ id: 'agent-default-model', config: { provider: 'indus-orbit', model: 'io/harness-primary' } }]
+      : [],
     patchFiles: process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit' ? [fileURLToPath(new URL('../indus-orbit.patch.yml', import.meta.url))] : [],
     args: ['--no-open', '--host', '127.0.0.1', '--port', '0'],
     ...(process.argv[5] === undefined ? {} : {

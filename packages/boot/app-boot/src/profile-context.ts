@@ -11,7 +11,10 @@ export interface ProfilePnpmInvocation {
   readonly env: Readonly<Record<string, string>>
 }
 
-/** Current profile facts; scheduling and mutation belong to their callers. */
+/**
+ * Current profile facts; scheduling and mutation belong to their callers.
+ * Application default patches remain below editable profile/home patches across startup and live reload.
+ */
 export interface ProfileContext {
   readonly name: string
   /** Packaged applications supply their bundled runtime instead of a PATH executable. */
@@ -23,6 +26,8 @@ export interface ProfileContext {
   readonly home: string
   /** Bundle packages used to start this process, before any persisted edits. */
   readonly startedBundles: readonly string[]
+  /** Application defaults after bundle patches and before editable profile/home patches; retained across reloads. */
+  readonly defaultPatches?: readonly PatchOptions[]
   /** Parsed command-line overlays, applied above profile and home patches. */
   readonly overlays: readonly PatchOptions[]
   /** Launch-time DSH_TELEMETRY_DISABLED value; any non-empty value opts out. */
@@ -74,6 +79,7 @@ export function readBundlePatches(binName: string, context: ProfileContext, init
 export function readProfilePatches(binName: string, context: ProfileContext, initialProfile?: Profile): PatchOptions[] {
   const patches = structuredClone([
     ...readBundlePatches(binName, context, initialProfile),
+    ...(context.defaultPatches ?? []),
     ...(initialProfile?.patches ?? loadOptionalPatches(binName, context.patchPath) ?? []),
     ...(loadOptionalPatches(binName, join(context.home, PROFILE_PATCH_FILENAME)) ?? []),
     ...context.overlays,

@@ -55,5 +55,51 @@
     "No public installer or owned update release",
     "Browser execution and real pairing remain unfinished",
     "Upstream organization/preview workflows are scoped to upstream; full fork CI remains a distinct receipt"
-  ]
+  ],
+  "builtHost": {
+    "date": "2026-10-28",
+    "state": "Verified",
+    "builtHost": true,
+    "profile": "desktop / indus-orbit",
+    "ready": true,
+    "selection": {
+      "provider": "indus-orbit",
+      "model": "io/harness-primary"
+    },
+    "models": 1,
+    "finish": "stop",
+    "providers": [
+      "deepseek-official",
+      "indus-orbit"
+    ],
+    "upstreamAccountDisabled": true,
+    "syntheticGatewayOperations": 1,
+    "realProviderCalls": 0,
+    "originalAccountStateTouched": false,
+    "hostedCreditGrant": false
+  },
+  "bootstrapRegression": {
+    "passed": 49,
+    "files": 3,
+    "scope": "Runtime installation closure, reload-stable application defaults below explicit profile/home choices, existing resolved profile and HMR behavior",
+    "command": "pnpm exec vitest run apps/cli/tests/resolved-profile-boot.spec.ts apps/cli/tests/profile-hmr.spec.ts packages/boot/app-boot/tests/profile.spec.ts",
+    "builtRehearsal": "node --import tsx/esm scripts/verify-indus-desktop-host.ts --runtime <primary-runtime directory> --receipt <JSON>",
+    "build": {
+      "passed": 9,
+      "failed": 0,
+      "durationSeconds": 535.59,
+      "artifacts": 335,
+      "publicValues": 6
+    },
+    "documentation": {
+      "aggregatePassed": 41,
+      "aggregateFailed": 2,
+      "repairedChecks": [
+        "doc graphs: passed with 4096 MiB Node heap",
+        "cordis catalog: regenerated and verified all 125 artifacts/regions"
+      ],
+      "distinctChecksPassed": 43
+    }
+  },
+  "validationNote": "Earlier 79-test model receipt retained. The final bootstrap build passes all 9 steps including both aggregate programs; documentation comprises 41 aggregate passes plus the two repaired checks. The final built-Host rehearsal passes against these artifacts."
 }

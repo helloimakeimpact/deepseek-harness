@@ -207,6 +207,27 @@ it('composes current files from profile data and retains launch overlay and tele
   expect(composeEntries([readProfilePatches('test', { ...enabled, overlays: [] })])[0]?.disabled).toBe(false)
 })
 
+it('retains application defaults across file rereads while allowing explicit user selection', () => {
+  const home = tmp()
+  const installAnchor = stageInstallation({ base: { patch: '- insert:\n  - id: model\n    name: model\n    config:\n      provider: upstream\n' } })
+  const dir = resolveProfileDir('test', home)
+  initProfile(dir, ['base'])
+  const profile = loadProfileDirectory('test', dir, installAnchor)
+  const context = {
+    name: 'test', dir, patchPath: profile.patchPath, installAnchor, home, cwd: home,
+    startedBundles: ['base'], defaultPatches: [{ id: 'model', config: { provider: 'owned' } }],
+    overlays: [], telemetryDisabledEnv: undefined,
+  }
+  const selection = (initial?: typeof profile): unknown => composeEntries([readProfilePatches('test', context, initial)])[0]?.config
+  expect(selection(profile)).toEqual({ provider: 'owned' })
+  expect(selection()).toEqual({ provider: 'owned' })
+  writeFileSync(profile.patchPath, '- id: model\n  config:\n    provider: chosen\n')
+  expect(selection()).toEqual({ provider: 'chosen' })
+  writeFileSync(profile.patchPath, '[]\n')
+  expect(selection()).toEqual({ provider: 'owned' })
+  expect(context.defaultPatches).toEqual([{ id: 'model', config: { provider: 'owned' } }])
+})
+
 describe('initProfile', () => {
   it('creates manifest, user patch layer, and pnpm workspace once, never overwriting', () => {
     const home = tmp()

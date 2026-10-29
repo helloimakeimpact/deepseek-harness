@@ -306,7 +306,7 @@ Source: [`packages/client/ui-plugin-manager/src/index.ts`](../../packages/client
 
 ### `ctx.profileContext` — `ProfileContext`
 
-Current profile facts; scheduling and mutation belong to their callers.
+Current profile facts; scheduling and mutation belong to their callers. Application default patches remain below editable profile/home patches across startup and live reload.
 
 Source: [`packages/boot/app-boot/src/profile-context.ts`](../../packages/boot/app-boot/src/profile-context.ts)
 
