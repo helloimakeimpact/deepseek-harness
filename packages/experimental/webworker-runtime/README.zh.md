@@ -25,6 +25,8 @@ kind: "package-library"
 
 公开 npm 包在根入口导出运行时库，通过 `./worker` 提供自包含的浏览器 Worker，通过 `./client` 提供页面连接器。部署方通过 [打包器](../webworker-packer/README.zh.md) 单独提供和托管 VFS 镜像；安装此库不会增加 profile 层。根入口还导出打包器所用的模块代理表与替换表。
 
+CommonJS 包装器按固定顺序 `browser`、`require`、`import`、`default` 解析包条件，不受 manifest 键顺序影响；调用方可提供其他顺序。packer 使用相同的解析器保留选中的文件。Worker 与重新打包的镜像必须一起部署；镜像契约会拒绝旧的解析布局。
+
 一条 tsdown 管线产出三个构建产物；另有一层由源码维护的进程实现：
 
 - **`lib/index.js`（装配库）**——`createWorkerHost`/`startWorkerHost` 挂载基础镜像和按序排列的数据 overlays（`storage/`）、登记镜像的懒加载归档、安装模块加载器（`module-system/`）与 `process` shim、经镜像自带的 `dsh-app-boot` 启动插件树，并把服务 seam 交给隧道。Overlay 只能替换 `home/` 与 `workspace/` 下的文件，不能替换基础 manifest 或模块。镜像布局契约（`image-layout.ts`：虚拟根、manifest 路径、懒加载归档目录、空目录）与 manifest（`image-manifest.ts`：profile、安装清单、`lowered` 包装契约门、懒加载归档）与 packer 共享。Worker 按启动器的方式启动 manifest 指定的随附 profile：镜像里的 app-boot 用随附模板初始化 `home/profiles/<profile>/`，从镜像单独携带的安装 manifest 解析 bundle，并合成各 bundle 层、profile patch 与 home patch。profile 上下文、启动环境快照，以及不带运行时 resolution 的 `PluginPackages` 服务都按启动器的方式提供；模块解析由 Worker 加载器负责。profile 上下文不带命令行 overlay；packer 按 `PLATFORM_ENTRY_CONFIG` 写入镜像的 home patch（`home/cordis.patch.yml`），使 JSONL Session 日志保持明文。ConfigEditor 将覆盖值持久化到 profile patch，协调每次写入，Loader 提交实时值。Worker 在隧道开始服务后提交 `appReady`，因此 HMR 可以加载 profile 变更并实时应用；Worker 的 ES module 缓存始终为空，`process` shim 也不报告入口脚本，因此 HMR 不比较、也不替换已加载的模块。插件管理可以列出并开关安装提供的 optional bundle，其包操作会因 `execa` 拒绝而失败。配置修改在当前 Worker 生命周期内有效。

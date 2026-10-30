@@ -92,12 +92,14 @@ export class IndusAuth {
   #generation = 0
   #disposed = false
   #storageQueue: Promise<void> = Promise.resolve()
+  #signingOut: Promise<void> | undefined
   #exchange: Promise<void> = Promise.resolve()
   readonly #config: IndusAuthConfig | undefined
   readonly #store: IndusTokenStore
   readonly #open: (url: string) => Promise<unknown>
   readonly #notify: (state: IndusAuthState) => void
   readonly #lost: () => Promise<void>
+  readonly #stop: () => Promise<void>
   readonly #fetch: typeof fetch
 
   constructor(options: {
@@ -106,6 +108,7 @@ export class IndusAuth {
     open: (url: string) => Promise<unknown>
     notify: (state: IndusAuthState) => void
     lost: () => Promise<void>
+    stop: () => Promise<void>
     fetch?: typeof fetch
   }) {
     this.#config = options.config === undefined ? undefined : Object.freeze({ ...options.config })
@@ -113,6 +116,7 @@ export class IndusAuth {
     this.#open = options.open
     this.#notify = options.notify
     this.#lost = options.lost
+    this.#stop = options.stop
     this.#fetch = options.fetch ?? fetch
     this.#state = this.#config === undefined ? 'unconfigured' : 'signed-out'
   }
@@ -242,7 +246,7 @@ export class IndusAuth {
   }
   /** Restores only this configured client's encrypted identity; failure remains signed out. */
   async restore(): Promise<void> {
-    if (this.#config === undefined || this.#disposed) return
+    if (this.#config === undefined || this.#disposed || this.#signingOut !== undefined) return
     const generation = this.#generation
     try {
       const refresh = await this.#store.read()
@@ -267,7 +271,7 @@ export class IndusAuth {
   }
   /** Opens the registered Indus Orbit authorization flow; no provider credential is read. */
   async start(): Promise<void> {
-    if (this.#config === undefined || this.#disposed || this.#state === 'signed-in' || this.#state === 'waiting') return
+    if (this.#config === undefined || this.#disposed || this.#signingOut !== undefined || this.#state === 'signed-in' || this.#state === 'waiting') return
     this.#stopAttempt()
     const generation = this.#generation
     const pkce = indusPkce()
@@ -397,8 +401,21 @@ export class IndusAuth {
       signal: AbortSignal.any([signal, this.#request.signal]),
     })
   }
-  /** Clears this device's identity and closes its work; other devices' grants remain unchanged. */
-  async signOut(): Promise<void> {
+  /** Invalidates this device immediately; exit waits for Host shutdown and credential removal. */
+  signOut(): Promise<void> {
+    if (this.#signingOut !== undefined) return this.#signingOut
+    const operation = Promise.withResolvers<void>()
+    this.#signingOut = operation.promise
+    void this.#finishSignOut().then(() => {
+      this.#signingOut = undefined
+      operation.resolve()
+    }, (error: unknown) => {
+      this.#signingOut = undefined
+      operation.reject(error)
+    })
+    return operation.promise
+  }
+  async #finishSignOut(): Promise<void> {
     const hadIdentity = this.#identity !== undefined
     this.#stopAttempt()
     clearTimeout(this.#refreshTimer)
@@ -406,16 +423,22 @@ export class IndusAuth {
     this.#accessToken = undefined
     this.#accessExpiresAt = 0
     this.#identity = undefined
+    // Host admission closes before asynchronous cleanup; UI completion is notified below.
+    this.#state = 'signed-out'
     const clear = this.#storageQueue.then(() => this.#store.clear())
     this.#storageQueue = clear.catch((_clearFailed: unknown) => undefined)
-    let cleared = false
+    let stopped: Promise<void>
     try {
-      await clear
-      cleared = true
-    } finally {
-      this.#set(cleared ? 'signed-out' : 'failed')
-      if (hadIdentity) await this.#lost()
+      stopped = hadIdentity ? this.#stop() : Promise.resolve()
+    } catch (error) {
+      stopped = Promise.reject(error instanceof Error ? error : new Error('Indus Orbit Host shutdown failed'))
     }
+    const outcomes = await Promise.allSettled([clear, stopped])
+    const errors: unknown[] = outcomes.flatMap(outcome => outcome.status === 'rejected' ? [outcome.reason as unknown] : [])
+    this.#set(errors.length === 0 ? 'signed-out' : 'failed')
+    try { if (hadIdentity && outcomes[1].status === 'fulfilled') await this.#lost() } catch (error) { errors.push(error) }
+    if (errors.length === 1) throw errors[0]
+    if (errors.length > 1) throw new AggregateError(errors, 'Indus Orbit sign-out did not finish cleanly')
   }
   /** Stops listeners and refresh work without deleting the user's saved session. */
   dispose(): void {

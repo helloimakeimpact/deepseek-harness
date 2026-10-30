@@ -34,7 +34,7 @@ pnpm run build:indus-orbit
 
 原生预览使用文件系统安全名称 `IO Harness`，显示为 I/O Harness。现有 `io-ws` 协议、`local.indusorbit.workstation.preview` 标识符、`IO W-S` Electron 数据目录及 `Indus Orbit Workstation Data/harness` 持久主目录保持稳定，避免丢失本地数据。显式设置 `DSH_HOME` 仍可覆盖 Harness 主目录。
 
-原生 `indus-orbit` 配置在启动 Host 前要求独立的 Indus Orbit OAuth 身份。缺少公开客户端配置时，仅显示隔离的登录窗口，不回退到模型提供方账户。主进程负责 PKCE、绑定 state 的回环回调、有界发行方请求和刷新凭据；渲染进程仅接收电子邮件与身份状态。可用时通过操作系统加密保存刷新凭据，否则仅存于进程内存。退出登录会清除此设备身份并停止其工作，即使移除凭据失败；不会撤销其他安装的授权。支持的回调为 `http://127.0.0.1:43189/indus-auth/callback`。
+原生 `indus-orbit` 配置在启动 Host 前要求独立的 Indus Orbit OAuth 身份。缺少公开客户端配置时，仅显示隔离的登录窗口，不回退到模型提供方账户。主进程负责 PKCE、绑定 state 的回环回调、有界发行方请求和刷新凭据；渲染进程仅接收电子邮件与身份状态。可用时通过操作系统加密保存刷新凭据，否则仅存于进程内存。退出登录会立即使此设备的身份和模型请求失效，并在等待移除凭据之前开始停止 Host。应用退出会等待停止及凭据清理两项操作完成；Host 停止失败时保留恢复路径，不宣称成功终止。并发退出请求共享同一个操作。其他安装的授权保持不变。支持的回调为 `http://127.0.0.1:43189/indus-auth/callback`。
 
 命名 `indus-orbit` 配置嵌入公开客户端标识符 `cf26c996-8c19-42c6-82ff-f0b6ccafd3ee` 与回调端口 `43189`；继承的公开环境变量无法更改其目标。这些值不是密钥。网站必须部署匹配的授权页面和标识符。启用前，数据库、Storage、Realtime 和 I/O 函数必须拒绝仅用于身份验证的 OAuth 令牌。真实托管登录、刷新和撤销需要另行验收。
 

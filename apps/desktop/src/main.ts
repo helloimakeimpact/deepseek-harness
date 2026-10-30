@@ -326,9 +326,9 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 }
 
 async function main(): Promise<void> {
-  const indusIdentity = product.profile === 'official' ? undefined : await requireIndusIdentity(async () => {
-    await stopForRecovery()
-    quitWithoutConfirmation()
+  const indusIdentity = product.profile === 'official' ? undefined : await requireIndusIdentity({
+    stop: () => stopForRecovery(),
+    lost: () => { quitWithoutConfirmation(); return Promise.resolve() },
   })
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
   void pruneCrashReports(app.getPath('logs'))

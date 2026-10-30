@@ -165,22 +165,31 @@ describe.skipIf(process.platform === 'win32')('Web sidebar terminal', () => {
         shadow: style.boxShadow, border: style.borderBottomColor, outline: style.outlineColor,
       }
     })
+    const captureCursor = async (background: string) => {
+      let captured: Awaited<ReturnType<typeof cursorColors>> | undefined
+      // Xterm replaces its cursor node on repaint. Retain the complete sample
+      // that satisfied readiness instead of reading a possibly detached node again.
+      await expect.poll(async () => {
+        captured = await cursorColors()
+        return captured.background === background && Object.values(captured).every(value => value.length > 0)
+      }).toBe(true)
+      if (captured === undefined) throw new Error('Terminal cursor did not produce a rendered sample')
+      return captured
+    }
     const paintCursor = async (sgr: string, shape = 2) => {
       await command(page, `printf '\\033[0m\\033[2J\\033[H\\033[${sgr}mCURSOR\\033[1G\\033[${shape} q'`)
       await expect.poll(() => screen.locator('.xterm-cursor').innerText()).toBe('C')
     }
     // ron uses foreground 51 and background 16; no installed Vim is required by CI.
     await paintCursor('38;5;51;48;5;16')
-    await expect.poll(async () => (await cursorColors()).background).toBe('rgb(255, 255, 255)')
-    const ronLight = await cursorColors()
+    const ronLight = await captureCursor('rgb(255, 255, 255)')
     expect(ronLight.foreground).toBe('rgb(0, 0, 0)')
     await terminal.screenshot({ path: `${shots}/ron-light.png`, animations: 'disabled' })
     await selectTerminalTheme(page, 'Dark')
     await page.locator('.xterm-helper-textarea:visible').click()
     await expect.poll(async () => (await cursorColors()).background).toBe('rgb(249, 250, 251)')
     await paintCursor('38;2;0;0;0;48;2;255;255;255')
-    await expect.poll(async () => (await cursorColors()).background).toBe('rgb(0, 0, 0)')
-    const whiteInDark = await cursorColors()
+    const whiteInDark = await captureCursor('rgb(0, 0, 0)')
     await paintCursor('0;7')
     await expect.poll(async () => (await cursorColors()).background).toBe('rgb(0, 0, 0)')
     for (const shape of [4, 6]) {

@@ -907,14 +907,14 @@ test('keeps trusted preflight before token minting and required policy unconditi
   assert.ok(steps[1].includes('node .github/issue-management/policy.mjs pr-preflight'))
   assert.ok(steps[1].includes('if [ -f .github/issue-management/selective-preflight.json ]; then'))
   assert.doesNotMatch(steps[1], /secrets\.|PROJECT_TOKEN|if:/)
-  assert.ok(steps[2].includes("if: ${{ steps.preflight.outputs.needs-project == 'true' }}"))
+  assert.ok(steps[2].includes("if: ${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.needs-project == 'true' }}"))
   assert.ok(steps[2].includes('permission-organization-projects: read'))
   assert.ok(steps[3].includes('PROJECT_TOKEN: ${{ steps.app-token.outputs.token }}'))
   assert.ok(steps[3].includes('run: node .github/issue-management/policy.mjs pr'))
-  assert.ok(steps[3].includes("if: ${{ steps.preflight.outputs.legacy-automated != 'true' }}"))
+  assert.ok(steps[3].includes("if: ${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.legacy-automated != 'true' }}"))
 })
 
-test('runs trusted rollout selection with absent and present capability markers', { skip: process.platform === 'win32' ? 'The policy workflow executes under hosted Ubuntu bash' : false }, (t) => {
+test('runs trusted repository and rollout selection before upstream Project access', { skip: process.platform === 'win32' ? 'The policy workflow executes under hosted Ubuntu bash' : false }, (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'dsh-policy-rollout-'))
   t.after(() => rmSync(directory, { recursive: true, force: true }))
   const source = readFileSync(new URL('../workflows/issue-policy.yml', import.meta.url), 'utf8')
@@ -928,6 +928,10 @@ test('runs trusted rollout selection with absent and present capability markers'
     { name: 'legacy app', type: 'App', marker: false, expected: 'legacy-automated=true\nneeds-project=false\n' },
     { name: 'modern exempt', type: 'Bot', marker: true, expected: 'exempt=true\nneeds-project=false\n' },
     { name: 'modern failure', type: 'User', marker: true, failure: true, expected: '' },
+    { name: 'owned fork without upstream policy', repository: 'helloimakeimpact/deepseek-harness', type: 'User', marker: false, expected: 'policy-scope=indus-orbit\nneeds-project=false\n' },
+    { name: 'owned fork with upstream marker', repository: 'helloimakeimpact/deepseek-harness', type: 'Bot', marker: true, expected: 'policy-scope=indus-orbit\nneeds-project=false\n' },
+    { name: 'unrecognized repository', repository: 'untrusted/deepseek-harness', type: 'User', marker: false, failure: true, expected: '' },
+    { name: 'missing repository', repository: '', type: 'User', marker: true, failure: true, expected: '' },
   ]
   for (const [index, fixture] of cases.entries()) {
     const cwd = join(directory, String(index))
@@ -943,7 +947,8 @@ test('runs trusted rollout selection with absent and present capability markers'
       : "throw new Error('preflight unavailable or failed')\n")
     const result = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
       cwd,
-      env: { PATH: process.env.PATH, GITHUB_EVENT_PATH: eventPath, GITHUB_OUTPUT: outputPath },
+      env: { PATH: process.env.PATH, GITHUB_EVENT_PATH: eventPath, GITHUB_OUTPUT: outputPath,
+        GITHUB_REPOSITORY: fixture.repository ?? 'deepseek-ai/deepseek-harness' },
       encoding: 'utf8',
       timeout: 30_000,
     })
@@ -951,7 +956,12 @@ test('runs trusted rollout selection with absent and present capability markers'
     assert.equal(result.signal, null, fixture.name)
     assert.equal(result.status, fixture.failure ? 1 : 0, fixture.name + ': ' + result.stderr)
     assert.equal(readFileSync(outputPath, 'utf8'), fixture.expected, fixture.name)
-    if (fixture.marker) assert.doesNotMatch(result.stdout, /preserving legacy/)
+    if (fixture.repository === 'helloimakeimpact/deepseek-harness') {
+      assert.match(result.stdout, /trusted repository verified; upstream organization Project policy does not apply/)
+      assert.doesNotMatch(result.stdout, /preserving legacy/)
+    } else if (fixture.repository !== undefined) {
+      assert.match(result.stderr, /no trusted policy owner/)
+    } else if (fixture.marker) assert.doesNotMatch(result.stdout, /preserving legacy/)
     else assert.match(result.stdout, /preserving legacy policy enforcement/)
   }
 })

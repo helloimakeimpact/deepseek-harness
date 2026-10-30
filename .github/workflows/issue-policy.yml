@@ -14,8 +14,6 @@ permissions:
 jobs:
   policy:
     name: Issue policy
-    # This organization Project and GitHub App belong to upstream, not to the I/O fork.
-    if: ${{ github.repository == 'deepseek-ai/deepseek-harness' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out trusted policy
@@ -29,6 +27,18 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          case "$GITHUB_REPOSITORY" in
+            helloimakeimpact/deepseek-harness)
+              printf 'policy-scope=indus-orbit\nneeds-project=false\n' >> "$GITHUB_OUTPUT"
+              echo 'Indus Orbit fork: trusted repository verified; upstream organization Project policy does not apply.'
+              exit 0
+              ;;
+            deepseek-ai/deepseek-harness) ;;
+            *)
+              echo '::error::Issue policy has no trusted policy owner for this repository.' >&2
+              exit 1
+              ;;
+          esac
           if [ -f .github/issue-management/selective-preflight.json ]; then
             node .github/issue-management/policy.mjs pr-preflight
           else
@@ -42,7 +52,7 @@ jobs:
           fi
       - name: Create Project read token
         id: app-token
-        if: ${{ steps.preflight.outputs.needs-project == 'true' }}
+        if: ${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.needs-project == 'true' }}
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.DSH_ISSUE_APP_CLIENT_ID }}
@@ -53,7 +63,7 @@ jobs:
           permission-organization-projects: read
       # Re-read current state even after an exempt preflight; never replace a failure with an edit skip.
       - name: Validate pull request
-        if: ${{ steps.preflight.outputs.legacy-automated != 'true' }}
+        if: ${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.legacy-automated != 'true' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PROJECT_TOKEN: ${{ steps.app-token.outputs.token }}

@@ -18,6 +18,7 @@ function fixture(fetcher = vi.fn<typeof fetch>(), callbackPort = 43189) {
   }
   const changed = vi.fn()
   const lost = vi.fn(async () => undefined)
+  const stop = vi.fn(async () => undefined)
   const open = vi.fn(async (_url: string) => undefined)
   const auth = new IndusAuth({
     config: { clientId, callbackPort },
@@ -25,12 +26,13 @@ function fixture(fetcher = vi.fn<typeof fetch>(), callbackPort = 43189) {
     fetch: fetcher,
     notify: changed,
     lost,
+    stop,
     open,
   })
   onTestFinished(() => {
     auth.dispose()
   })
-  return { auth, store, changed, lost, open, fetcher }
+  return { auth, store, changed, lost, stop, open, fetcher }
 }
 describe('Indus Orbit native identity', () => {
   it('refuses model access after the token lease expires before a delayed refresh runs', async () => {
@@ -78,6 +80,7 @@ describe('Indus Orbit native identity', () => {
       fetch: f.fetcher,
       notify: f.changed,
       lost: f.lost,
+      stop: f.stop,
       open: f.open,
     })
     expect(auth.state).toBe('unconfigured')
@@ -275,6 +278,64 @@ it('ignores a code exchange that finishes after the user cancels', async () => {
   expect(f.store.write).not.toHaveBeenCalled()
 })
 
+it('starts stopping signed-in work before credential removal and awaits both before exit', async () => {
+  const f = fixture(vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json(token))
+    .mockResolvedValueOnce(Response.json({ sub: userId, email: 'member@example.test', email_verified: true })))
+  f.store.read.mockResolvedValue('old')
+  await f.auth.restore()
+  const clearing = Promise.withResolvers<undefined>()
+  const clearStarted = Promise.withResolvers<undefined>()
+  const stopping = Promise.withResolvers<undefined>()
+  f.store.clear.mockImplementation(() => { clearStarted.resolve(undefined); return clearing.promise })
+  f.stop.mockImplementation(() => stopping.promise)
+  const signOut = f.auth.signOut()
+  onTestFinished(async () => {
+    clearing.resolve(undefined)
+    stopping.resolve(undefined)
+    await signOut.catch(() => undefined)
+  })
+  expect(f.stop).toHaveBeenCalledOnce()
+  expect(f.auth.identity).toBeUndefined()
+  expect(f.auth.state).toBe('signed-out')
+  await f.auth.start()
+  await f.auth.restore()
+  expect(f.store.read).toHaveBeenCalledOnce()
+  expect(f.open).not.toHaveBeenCalled()
+  await expect(f.auth.fetchModel('/v1/models', undefined, new AbortController().signal)).rejects.toThrow('sign-in')
+  expect(f.auth.signOut()).toBe(signOut)
+  await clearStarted.promise
+  clearing.resolve(undefined)
+  await clearing.promise
+  expect(f.lost).not.toHaveBeenCalled()
+  stopping.resolve(undefined)
+  await signOut
+  expect(f.store.clear).toHaveBeenCalledOnce()
+  expect(f.lost).toHaveBeenCalledOnce()
+  expect(f.auth.state).toBe('signed-out')
+})
+
+it('waits for credential cleanup and keeps recovery available when Host shutdown rejects', async () => {
+  const f = fixture(vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json(token))
+    .mockResolvedValueOnce(Response.json({ sub: userId, email: 'member@example.test', email_verified: true })))
+  f.store.read.mockResolvedValue('old')
+  await f.auth.restore()
+  const clearing = Promise.withResolvers<undefined>()
+  const clearStarted = Promise.withResolvers<undefined>()
+  f.store.clear.mockImplementation(() => { clearStarted.resolve(undefined); return clearing.promise })
+  f.stop.mockRejectedValue(new Error('Host could not stop cleanly'))
+  const signOut = f.auth.signOut()
+  const result = expect(signOut).rejects.toThrow('Host could not stop cleanly')
+  onTestFinished(async () => { clearing.resolve(undefined); await result })
+  await clearStarted.promise
+  expect(f.lost).not.toHaveBeenCalled()
+  clearing.resolve(undefined)
+  await result
+  expect(f.lost).not.toHaveBeenCalled()
+  expect(f.auth.state).toBe('failed')
+})
+
 it('stops signed-in work even if removing the encrypted credential fails', async () => {
   const f = fixture(
     vi
@@ -287,6 +348,7 @@ it('stops signed-in work even if removing the encrypted credential fails', async
   f.store.clear.mockRejectedValue(new Error('Disk unavailable'))
   await expect(f.auth.signOut()).rejects.toThrow('Disk unavailable')
   expect(f.lost).toHaveBeenCalledOnce()
+  expect(f.stop).toHaveBeenCalledOnce()
   expect(f.auth.identity).toBeUndefined()
   expect(f.auth.state).toBe('failed')
 })
