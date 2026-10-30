@@ -26,7 +26,7 @@ export function desktopPackagingProduct(environment) {
  * @returns {void}
  */
 export function assertDesktopProfilePackaging(environment, unsigned) {
-  if (!desktopPackagingProduct(environment).updatesEnabled && !unsigned) {
+  if (desktopPackagingProduct(environment).profile === 'indus-orbit' && !unsigned) {
     throw new Error('desktop profile: I/O Harness supports unsigned local previews only; fork signing, accounts and update publication require review')
   }
 }

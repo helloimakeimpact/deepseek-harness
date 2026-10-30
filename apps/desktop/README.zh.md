@@ -30,7 +30,7 @@ Desktop 在原生应用中运行 Harness 工作区。本参考文档说明应用
 
 ## 应用概览
 
-`indus-orbit` 构建选择 I/O Harness 预览身份。其原生文件名为 `IO Harness`，协议为 `io-ws`，本地预览标识符为 `local.indusorbit.workstation.preview`。旧 `IO W-S` Electron 数据目录及独立持久 Harness 主目录保持稳定，避免品牌更名影响本地数据。原生预览标志为 `[H]`，右上角配有小型现有 I/O 标志。登录窗口在读取主进程状态前从隔离的 preload 加载本地化标签；IPC 失败时禁用登录并显示恢复说明。preload 失败由原生进程报告。打包预览在 Host 启动前要求 Indus Orbit 身份，并禁用上游账户身份，同时保留显式的直接密钥与 pi-ai 提供方选择。自有 I/O 提供方通过私有主进程代理及独立的工作区额度授权连接；配置详见预览参考。显式设置 `DSH_HOME` 可覆盖 Harness 主目录。签名打包、上游更新源及上传均被拒绝；参见[分支预览参考](../../docs/indus-orbit-terminal-preview.zh.md)。本参考其余内容描述上游 `official` 配置。
+`indus-orbit` 构建选择 I/O Harness 预览身份。其原生文件名为 `IO Harness`，协议为 `io-ws`，本地预览标识符为 `local.indusorbit.workstation.preview`。旧 `IO W-S` Electron 数据目录及独立持久 Harness 主目录保持稳定，避免品牌更名影响本地数据。原生预览标志为 `[H]`，右上角配有小型现有 I/O 标志。登录窗口在读取主进程状态前从隔离的 preload 加载本地化标签；IPC 失败时禁用登录并显示恢复说明。preload 失败由原生进程报告。打包预览在 Host 启动前要求 Indus Orbit 身份，并禁用上游账户身份，同时保留显式的直接密钥与 pi-ai 提供方选择。自有 I/O 提供方通过私有主进程代理及独立的工作区额度授权连接；配置详见预览参考。显式设置 `DSH_HOME` 可覆盖 Harness 主目录。签名打包、上游更新源及上传均被拒绝；参见[分支预览参考](../../docs/indus-orbit-terminal-preview.zh.md)。本参考其余内容描述上游 `official` 配置。 原生产品通过明确的 profile 选择账户身份、数据目录和图稿，不依赖更新功能是否启用。
 
 Indus Orbit Host 从 Desktop 运行时软件包的依赖闭包解析插件，并在 profile 重载时保留 I/O 默认模型。显式 profile 或 home 模型选择优先。在 Indus Orbit 构建完成后，使用 `node --import tsx/esm scripts/verify-indus-desktop-host.ts --runtime <primary-runtime directory> --receipt <output JSON>` 运行无密钥的内置 Host 检查；它仅使用临时 profile 和合成推理。
 

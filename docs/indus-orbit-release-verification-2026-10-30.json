@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "state": "Verified",
+  "productionState": "Partial",
+  "scope": "Focused CI corrections and explicit native identity profile; no signed installer or hosted credit release.",
+  "ciRegressions": { "files": 4, "passed": 265, "failed": 0 },
+  "identityAndPackaging": { "files": 6, "passed": 61, "failed": 0 },
+  "workspaceConstraints": "passed",
+  "changedSourceLint": { "files": 13, "passed": true },
+  "build": { "profile": "indus-orbit", "passed": 9, "failed": 0, "durationSeconds": 41.18 },
+  "typecheck": { "passed": 5, "failed": 0, "durationSeconds": 7.47 },
+  "priorRemoteCi": {
+    "runId": 40973370426,
+    "state": "failed",
+    "correctedLocally": ["unsupported coverage partition count", "missing required Host profile in allowed package files"],
+    "unresolved": ["headless DeepSeek defaults expected-output case recorded three mock requests instead of two"],
+    "focusedUnchangedHeadlessCase": { "passed": 1, "skipped": 17, "resolvesRemoteFailure": false }
+  },
+  "fullRepositoryLintCompleted": false,
+  "signedForkPackagingEnabled": false,
+  "upstreamUpdateFeedEnabledForFork": false,
+  "publicInstallerPublished": false,
+  "hostedCreditExecutionQualified": false,
+  "secretsIncluded": false
+}

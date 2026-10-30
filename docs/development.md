@@ -152,7 +152,7 @@ Outside CI (`CI` other than `true`), default worker counts follow the [local wor
 
 ### CI gates
 
-The owned `helloimakeimpact/deepseek-harness` fork defaults its primary Linux and Windows PR lanes to standard GitHub-hosted runners, with bounded worker counts and one coverage partition. Required commands, coverage thresholds, aggregate dependencies and read-only workflow permissions are preserved. Explicit failover and upstream runner defaults remain unchanged; runner selection alone is not platform qualification.
+The owned `helloimakeimpact/deepseek-harness` fork defaults its primary Linux and Windows PR lanes to standard GitHub-hosted runners, with bounded worker counts and two single-worker coverage partitions. Required commands, coverage thresholds, aggregate dependencies and read-only workflow permissions are preserved. Explicit failover and upstream runner defaults remain unchanged; runner selection alone is not platform qualification.
 
 The keyless [CI workflow](../.github/workflows/ci.yml) groups independent gates into broad lanes and runs a smaller compatibility signal across supported Node versions. Artifact consumers wait for one build within their lane. Coverage partitions reuse file timings scoped to their platform and runner pool to balance work within the configured worker limit. Required benchmarks run separately on standard GitHub-hosted Linux; the [benchmark runner reference](../benchmarks/AGENTS.md) owns routing and the job timeout. The separate real-API workflow runs `pnpm run test:e2e` with its configured worker bound. See [scripts/run-gates.ts](../scripts/run-gates.ts) and the workflow files for the current gate and job inventory.
 

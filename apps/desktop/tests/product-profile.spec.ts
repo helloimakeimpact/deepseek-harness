@@ -10,7 +10,7 @@ describe('I/O Harness native preview identity', () => {
   const fork = { DSH_BUILD_CLIENT_PROFILE: 'indus-orbit' }
 
   it('separates native names, installer files and protocol from the upstream application', () => {
-    expect(desktopPackagingProduct(fork)).toEqual({ displayName: 'I/O Harness', nativeName: 'IO Harness',
+    expect(desktopPackagingProduct(fork)).toEqual({ profile: 'indus-orbit', displayName: 'I/O Harness', nativeName: 'IO Harness',
       artifactPrefix: 'io-harness', protocol: 'io-ws', previewAppId: 'local.indusorbit.workstation.preview', updatesEnabled: false,
       homeDirectoryName: 'Indus Orbit Workstation Data', userDataDirectoryName: 'IO W-S' })
     expect(desktopProduct('official')).toMatchObject({ displayName: 'DeepSeek Harness', protocol: 'dsh', updatesEnabled: true })
@@ -20,7 +20,7 @@ describe('I/O Harness native preview identity', () => {
 
   it('keeps durable Harness data outside every fork installer data-deletion target', () => {
     const product = desktopProduct('indus-orbit')
-    if (product.updatesEnabled) throw new Error('expected fork preview')
+    if (product.profile !== 'indus-orbit') throw new Error('expected fork preview')
     expect(product.homeDirectoryName).not.toBe(product.nativeName)
     expect(product.userDataDirectoryName).toBe('IO W-S')
     expect(product.homeDirectoryName).not.toBe(product.userDataDirectoryName)

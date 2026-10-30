@@ -477,7 +477,7 @@ export async function packageTarget(
         { cwd: APP_ROOT, env: electronBuilderEnv, timeoutMs: 60_000 })
     })
   }
-  const clientProfile = desktopPackagingProduct(environment).updatesEnabled ? 'official' : 'indus-orbit'
+  const clientProfile = desktopPackagingProduct(environment).profile
   await execute(clientProfile === 'official' ? ['run', 'build:official'] : ['run', 'build', '--profile', clientProfile], buildEnv, REPOSITORY_ROOT)
   await execute(['run', 'release:pack', '--family', 'dsh', ...(clientProfile === 'official' ? [] : ['--client-profile', clientProfile]),
     '--out', buildPaths.packedDsh, ...packArguments], buildEnv, REPOSITORY_ROOT)

@@ -45,7 +45,7 @@ export function localMacOSPackageEnvironment(environment = process.env) {
  */
 export function loadDesktopPackageEnvironment(platform, environment = process.env, appRoot = APP_ROOT, options = {}) {
   assertDesktopProfilePackaging(environment, options.unsigned === true)
-  if (!desktopPackagingProduct(environment).updatesEnabled && options.unsigned) return localMacOSPackageEnvironment(environment)
+  if (desktopPackagingProduct(environment).profile === 'indus-orbit' && options.unsigned) return localMacOSPackageEnvironment(environment)
   const preset = environment.DSH_PACKAGING_PRESET
   let path = join(appRoot, platform === 'win32' ? '.env.windows' : '.env.macos')
   if (preset !== undefined) {
@@ -140,7 +140,7 @@ export function validateDesktopPackageEnvironment(environment, target, options =
   assertDesktopProfilePackaging(environment, options.unsigned === true)
   resolveDesktopAppId(environment)
   resolveNpmRegistry(environment)
-  if (desktopPackagingProduct(environment).updatesEnabled && (target.platform !== 'darwin' || !options.unsigned)) resolveDesktopPolicyEnvironment(environment)
+  if (desktopPackagingProduct(environment).profile === 'official' && (target.platform !== 'darwin' || !options.unsigned)) resolveDesktopPolicyEnvironment(environment)
   if (target.platform === 'darwin') resolveMacOSPackageSettings(environment)
   else resolveWindowsPackageSettings(environment)
   if (options.unsigned) return

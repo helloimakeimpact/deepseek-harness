@@ -67,7 +67,7 @@ import { IndusModelBroker } from './indus-model-broker.ts'
 import { desktopProduct } from './product.ts'
 
 const product = desktopProduct()
-if (!product.updatesEnabled) {
+if (product.profile === 'indus-orbit') {
   app.setName(product.nativeName)
   if (app.isPackaged) app.setPath('userData', join(app.getPath('appData'), product.userDataDirectoryName))
   process.env.DSH_HOME ??= join(app.getPath('appData'), product.homeDirectoryName, 'harness')
@@ -326,7 +326,7 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 }
 
 async function main(): Promise<void> {
-  const indusIdentity = product.updatesEnabled ? undefined : await requireIndusIdentity(async () => {
+  const indusIdentity = product.profile === 'official' ? undefined : await requireIndusIdentity(async () => {
     await stopForRecovery()
     quitWithoutConfirmation()
   })
@@ -837,7 +837,7 @@ async function main(): Promise<void> {
     }
     let failedOperation: 'check' | 'download' | 'install' = 'check'
     promptOperation ??= Promise.resolve().then(async () => {
-      if (!product.updatesEnabled) {
+      if (product.profile === 'indus-orbit') {
         await ordinaryMessageBox({ type: 'info', title: locale.messages.updateCheckTitle,
           message: locale.messages.updateUnavailable, buttons: [locale.messages.updateAcknowledge] })
         return
@@ -966,7 +966,7 @@ async function main(): Promise<void> {
     updates.dispose()
   })
 
-  const applicationIconPath = development ? join(app.getAppPath(), 'resources', product.updatesEnabled ? 'icon-windows.png' : 'io-harness-mark.png')
+  const applicationIconPath = development ? join(app.getAppPath(), 'resources', product.profile === 'official' ? 'icon-windows.png' : 'io-harness-mark.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
     applicationName: product.displayName,
@@ -999,7 +999,7 @@ async function main(): Promise<void> {
       : { label: currentDesktopLocale().messages.aboutMenu, role: 'about' },
     { type: 'separator' },
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
-    ...product.updatesEnabled && (process.platform === 'darwin' || process.platform === 'win32')
+    ...product.profile === 'official' && (process.platform === 'darwin' || process.platform === 'win32')
       ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
     ...development ? [
       { type: 'separator' as const },
@@ -1028,8 +1028,8 @@ async function main(): Promise<void> {
   }
   refreshApplicationMenu()
   const trayIconPath = development
-    ? join(app.getAppPath(), 'resources', product.updatesEnabled ? 'tray-windows.ico' : 'io-harness-mark.png')
-    : join(process.resourcesPath, product.updatesEnabled ? 'tray.ico' : 'tray.png')
+    ? join(app.getAppPath(), 'resources', product.profile === 'official' ? 'tray-windows.ico' : 'io-harness-mark.png')
+    : join(process.resourcesPath, product.profile === 'official' ? 'tray.ico' : 'tray.png')
   if (process.platform === 'win32') {
     // The tray is the way back to a hidden window; without it, relaunching the application still focuses it.
     try {
@@ -1332,10 +1332,10 @@ async function main(): Promise<void> {
   mainWindow = createMainWindow()
   if (typeof manifest !== 'object' || manifest === null) throw new Error('desktop policy: invalid application manifest')
   const developmentPolicy = app.isPackaged ? undefined : process.env.DSH_DESKTOP_MANDATORY_UPDATE_CONFIG
-  const policyInput: unknown = !product.updatesEnabled ? undefined : app.isPackaged
+  const policyInput: unknown = product.profile === 'indus-orbit' ? undefined : app.isPackaged
     ? ('dshMandatoryUpdatePolicy' in manifest ? manifest.dshMandatoryUpdatePolicy : undefined)
     : developmentPolicy === undefined ? undefined : JSON.parse(developmentPolicy) as unknown
-  const policyConfig = resolveDesktopPolicyConfig(policyInput, !app.isPackaged || !product.updatesEnabled)
+  const policyConfig = resolveDesktopPolicyConfig(policyInput, !app.isPackaged || product.profile === 'indus-orbit')
   if (policyConfig !== undefined) {
     if (policyConfig.authentication === 'feishu-test') {
       policyAuth = new DesktopPolicyTestAuth(policyConfig.origin, policyConfig.allowedAuthOrigins, locale,

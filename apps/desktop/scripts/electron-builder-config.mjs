@@ -53,7 +53,7 @@ export function createElectronBuilderConfig(
 ) {
   const product = desktopPackagingProduct(env)
   assertDesktopProfilePackaging(env, env.DSH_DESKTOP_UNSIGNED === '1')
-  const appId = product.updatesEnabled ? resolveDesktopAppId(env) : product.previewAppId
+  const appId = product.profile === 'official' ? resolveDesktopAppId(env) : product.previewAppId
   const targetPlatform = env.DSH_DESKTOP_TARGET_PLATFORM
   const resolvedPlatform = targetPlatform ?? hostPlatform
   const resolvedArch = env.DSH_DESKTOP_TARGET_ARCH ?? hostArch
@@ -68,7 +68,7 @@ export function createElectronBuilderConfig(
   if (skipNotarization && (unsigned || resolvedPlatform !== 'darwin')) throw new Error('Skipping notarization requires a signed macOS build')
   const packagesMacOS = targetPlatform === 'darwin' || (targetPlatform === undefined && hostPlatform === 'darwin')
   const packagesWindows = resolvedPlatform === 'win32'
-  const policy = !product.updatesEnabled || (packagesMacOS && unsigned) ? undefined : resolveDesktopPolicyEnvironment(env)
+  const policy = product.profile === 'indus-orbit' || (packagesMacOS && unsigned) ? undefined : resolveDesktopPolicyEnvironment(env)
   if (resolvedPlatform === 'win32') installWindowsDirectoryInstaller()
   const macOSSigning = packagesMacOS && !unsigned ? resolveMacOSSigningEnvironment(env) : undefined
   if (packagesMacOS && !unsigned && !skipNotarization) resolveMacOSNotarizationEnvironment(env)
@@ -110,7 +110,7 @@ export function createElectronBuilderConfig(
     appId,
     protocols: [{ name: product.displayName, schemes: [product.protocol] }],
     extraMetadata: {
-      ...product.updatesEnabled ? {} : { name: 'io-harness-preview', dshClientBuildProfile: 'indus-orbit' },
+      ...product.profile === 'official' ? {} : { name: 'io-harness-preview', dshClientBuildProfile: 'indus-orbit' },
       dshDesktopAppId: appId,
       dshDesktopUpdateChannel: update?.channel ?? 'nightly',
       ...(policy === undefined ? {} : { dshMandatoryUpdatePolicy: policy }),
@@ -157,12 +157,12 @@ export function createElectronBuilderConfig(
     asarUnpack: unpack,
     extraResources: [
       { from: buildPaths.runtime, to: 'runtime' },
-      { from: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-windows.png' : '../resources/io-harness-mark.png', import.meta.url)), to: 'icon.png' },
+      { from: fileURLToPath(new URL(product.profile === 'official' ? '../resources/icon-windows.png' : '../resources/io-harness-mark.png', import.meta.url)), to: 'icon.png' },
       // Windows tray bitmaps; macOS keeps the Dock and ships no menu bar icon.
-      ...(packagesWindows ? [{ from: fileURLToPath(new URL(product.updatesEnabled ? '../resources/tray-windows.ico' : '../resources/io-harness-mark.png', import.meta.url)), to: product.updatesEnabled ? 'tray.ico' : 'tray.png' }] : []),
+      ...(packagesWindows ? [{ from: fileURLToPath(new URL(product.profile === 'official' ? '../resources/tray-windows.ico' : '../resources/io-harness-mark.png', import.meta.url)), to: product.profile === 'official' ? 'tray.ico' : 'tray.png' }] : []),
     ],
     mac: {
-      icon: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-macos.png' : '../resources/io-harness-mark.png', import.meta.url)),
+      icon: fileURLToPath(new URL(product.profile === 'official' ? '../resources/icon-macos.png' : '../resources/io-harness-mark.png', import.meta.url)),
       category: 'public.app-category.developer-tools',
       // macOS matches the application locale against this bundle, not Electron Framework resources.
       // Ad-hoc signing keeps the modified Electron executable runnable without a Developer ID.
@@ -241,7 +241,7 @@ export function createElectronBuilderConfig(
       )
     },
     win: {
-      icon: fileURLToPath(new URL(product.updatesEnabled ? '../resources/icon-windows.png' : '../resources/io-harness-mark.png', import.meta.url)),
+      icon: fileURLToPath(new URL(product.profile === 'official' ? '../resources/icon-windows.png' : '../resources/io-harness-mark.png', import.meta.url)),
       forceCodeSigning: !unsigned,
       signtoolOptions: {
         sign: windowsSigner,

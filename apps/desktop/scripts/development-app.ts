@@ -40,7 +40,7 @@ export function prepareDevelopmentApp(options: DevelopmentAppOptions): string {
     const values = {
       CFBundleIdentifier: `${product.previewAppId}.dev.${createHash('sha256').update(options.appRoot).digest('hex').slice(0, 12)}`,
       CFBundleName: 'Harness Dev',
-      CFBundleDisplayName: product.updatesEnabled ? 'Harness Dev' : `${product.displayName} Dev`,
+      CFBundleDisplayName: product.profile === 'official' ? 'Harness Dev' : `${product.displayName} Dev`,
       CFBundleExecutable: 'HarnessDev',
       CFBundleURLTypes: [{ CFBundleURLName: product.displayName, CFBundleURLSchemes: [product.protocol], CFBundleTypeRole: 'Viewer' }],
     }

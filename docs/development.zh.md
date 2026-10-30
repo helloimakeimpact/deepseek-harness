@@ -157,7 +157,7 @@ pi-ai 检查会在内存中重新生成预期元数据。数据过期时，检�
 
 ### CI 门禁
 
-自有 `helloimakeimpact/deepseek-harness` 分支的主要 Linux 和 Windows PR lane 默认使用标准 GitHub 托管运行器，并限制 worker 数、使用一个覆盖率分区。必需命令、覆盖率阈值、汇总依赖和只读工作流权限均保留。显式故障切换及上游运行器默认值不变；仅完成运行器选择不代表平台已通过验收。
+自有 `helloimakeimpact/deepseek-harness` 分支的主要 Linux 和 Windows PR lane 默认使用标准 GitHub 托管运行器，并限制 worker 数、使用两个单 worker 覆盖率分区。必需命令、覆盖率阈值、汇总依赖和只读工作流权限均保留。显式故障切换及上游运行器默认值不变；仅完成运行器选择不代表平台已通过验收。
 
 keyless [CI 工作流](../.github/workflows/ci.yml) 将独立门禁分组到若干宽粒度 lane，并在受支持的 Node 版本上运行一组较小的兼容性检查。产物消费方在各自 lane 内等待一次 build。覆盖率分区复用按平台和运行器池隔离的文件耗时，在配置的 worker 上限内均衡工作量。必需 benchmark 在标准 GitHub 托管 Linux 上独立运行；[benchmark 运行器说明](../benchmarks/AGENTS.md)拥有路由及 job 超时。单独的真实 API 工作流按其配置的 worker 上限运行 `pnpm run test:e2e`。当前门禁和 job 清单以 [scripts/run-gates.ts](../scripts/run-gates.ts) 和工作流文件为准。
 

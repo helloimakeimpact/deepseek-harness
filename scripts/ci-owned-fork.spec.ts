@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import yaml from 'js-yaml'
 import { expect, it } from 'vitest'
+import { parseCoveragePartitionCount } from './coverage-partitions.ts'
 
 interface Job { 'runs-on'?: string; env?: Record<string, string>; needs?: string[]; steps?: { run?: string }[] }
 const ci = yaml.load(readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')) as { jobs: Record<string, Job>; permissions: Record<string, string> }
@@ -33,7 +34,7 @@ it('bounds hosted coverage workers/partitions while preserving complete coverage
   for (const name of ['node-24-coverage', 'windows-coverage']) {
     const env = ci.jobs[name]!.env!
     expect(evaluate(env.DSH_COVERAGE_MAX_WORKERS!, owned)).toBe('2')
-    expect(evaluate(env.DSH_COVERAGE_PARTITIONS!, owned)).toBe('1')
+    expect(parseCoveragePartitionCount(String(evaluate(env.DSH_COVERAGE_PARTITIONS!, owned)))).toBe(2)
     expect(evaluate(env.DSH_GATE_CONCURRENCY!, owned)).toBe('1')
     expect(evaluate(env.DSH_COVERAGE_MAX_WORKERS!, 'deepseek-ai/deepseek-harness', 'selfhosted')).toBe('6')
     expect(env.DSH_COVERAGE_TEST_TIMEOUT_MS).toBe('90000')

@@ -154,7 +154,7 @@ export async function suggestDesktopBuildVersion(options: DesktopBuildVersionSug
   const prefix = `${desktopBuildVersionPrefix(options.productVersion)}${options.date ?? desktopBuildDateSegment()}.`
   const published = await remoteVersions(options)
   const product = desktopPackagingProduct(options.environment)
-  const prefixes = product.updatesEnabled ? [product.artifactPrefix] : [product.artifactPrefix, 'io-ws']
+  const prefixes = product.profile === 'official' ? [product.artifactPrefix] : [product.artifactPrefix, 'io-ws']
   const taken = published ?? await localVersions(options.artifactsRoot, prefixes)
   const used = sequenceNumbers(taken, prefix)
   const next = used.length === 0 ? 1 : Math.max(...used) + 1
