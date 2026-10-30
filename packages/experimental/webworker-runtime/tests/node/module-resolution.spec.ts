@@ -58,6 +58,7 @@ describe('Worker package condition priority', () => {
     // Zod owns this cross-module configuration; preserve the test process's exact prior state.
     const previous = Object.getOwnPropertyDescriptor(globalThis, '__zod_globalConfig')
     try {
+      Object.defineProperty(globalThis, '__zod_globalConfig', { value: {}, writable: true, configurable: true })
       const loader = new WorkerModuleLoader({ vfs, staticModules: {} })
       const require = loader.createRequire('/dsh/')
       const zod = require('zod') as typeof import('zod')
