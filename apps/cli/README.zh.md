@@ -62,3 +62,5 @@ profile 目录包含一个 `package.json`，其中记录树外插件依赖，以
 打包安装通过同一个 `runCli()` 入口传入包管理器可执行文件。Desktop 载体还会启用其已初始化 profile 的插件操作；npm 启动不传入这些选项。安装包提供的包管理环境仅用于插件包操作；调用目录、普通 profile 选择与 agent shell 的 PATH 保留 CLI 语义。
 
 [Web 失败矩阵](tests/profiles/web/tests/web-failure-matrix.expected.e2e.ts)在 `test:expected` 中通过构建后的 CLI 验证启动失败与启用 `awaitWriteFinish` 的原生配置 HMR。它不调用模型 API，而是检查经过认证的 HTTP 响应、诊断、恢复、进程退出与 dispose；[启动验收测试](tests/profiles/web/tests/web-best-effort-startup.expected.e2e.ts)还覆盖随附 Web 的必需依赖与端口冲突。
+
+[无界面默认值场景](tests/profiles/headless/tests/headless.expected.e2e.ts)通过组装后的应用检查请求默认值及包含注释的流，并等待辅助标题请求到达后才结束响应。较短的空闲期限由[适配器的模拟时钟](../../packages/llm/llm-deepseek/tests/runtime.spec.ts)验证，不依赖子进程启动或主机调度。
