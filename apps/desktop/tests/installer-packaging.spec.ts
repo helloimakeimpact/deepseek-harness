@@ -12,6 +12,23 @@ vi.mock('node:child_process', async (importOriginal) => {
 })
 
 describe('installer preparation preserves application dependencies', () => {
+  it.each(['official', 'indus-orbit'] as const)('selects the Windows setup artwork for %s', async (profile) => {
+    execute.mockClear()
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig({
+      DSH_BUILD_CLIENT_PROFILE: profile,
+      DSH_DESKTOP_TARGET_PLATFORM: 'win32', DSH_DESKTOP_TARGET_ARCH: 'x64', DSH_DESKTOP_UNSIGNED: '1',
+      DSH_DESKTOP_APP_ID: 'com.example.installer',
+      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
+      DSH_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
+    }, 'win32', 'x64')
+    await config.beforeBuild()
+    expect(execute).toHaveBeenCalledTimes(1)
+    if (profile === 'indus-orbit') expect(execute).toHaveBeenCalledWith('powershell.exe',
+      expect.arrayContaining(['-BrandImage', expect.stringContaining('io-harness-mark.png')]), expect.anything())
+    else expect(execute).not.toHaveBeenCalledWith('powershell.exe', expect.arrayContaining(['-BrandImage']), expect.anything())
+  })
+
   it.each(['win32', 'darwin'] as const)('rejects a missing production policy before signing on %s', async (platform) => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     expect(() => createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.example.installer',

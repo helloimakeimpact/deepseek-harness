@@ -1,6 +1,6 @@
 <# Compile the x86 DWM helper and raster assets embedded in the NSIS installer. #>
 [CmdletBinding()]
-param([string]$OutputDirectory, [switch]$TestProgress, [switch]$CompileProgressOnly)
+param([string]$OutputDirectory, [string]$BrandImage, [switch]$TestProgress, [switch]$CompileProgressOnly)
 $ErrorActionPreference = 'Stop'
 $installerRoot = Join-Path $PSScriptRoot '../installer'
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot '../.desktop-build/targets/win-x64/installer-ui' }
@@ -62,19 +62,42 @@ if ($TestProgress -or $CompileProgressOnly) {
     }
 }
 Add-Type -AssemblyName System.Drawing
-foreach ($asset in @('brand', 'brand-2x', 'brand-dark', 'brand-dark-2x', 'uninstaller-sidebar')) {
-    $image = [Drawing.Image]::FromFile((Join-Path $installerRoot "assets/$asset.png"))
-    try {
-        $bitmap = [Drawing.Bitmap]::new($image.Width, $image.Height, [Drawing.Imaging.PixelFormat]::Format24bppRgb)
+$profileBrand = if ($BrandImage) { [Drawing.Image]::FromFile([IO.Path]::GetFullPath($BrandImage)) } else { $null }
+try {
+    foreach ($asset in @('brand', 'brand-2x', 'brand-dark', 'brand-dark-2x', 'uninstaller-sidebar')) {
+        $image = [Drawing.Image]::FromFile((Join-Path $installerRoot "assets/$asset.png"))
         try {
-            $graphics = [Drawing.Graphics]::FromImage($bitmap)
+            $bitmap = [Drawing.Bitmap]::new($image.Width, $image.Height, [Drawing.Imaging.PixelFormat]::Format24bppRgb)
             try {
-                $background = if ($asset -like '*dark*') { [Drawing.Color]::FromArgb(21, 21, 23) } else { [Drawing.Color]::White }
-                $graphics.Clear($background)
-                $graphics.DrawImage($image, 0, 0, $image.Width, $image.Height)
-            } finally { $graphics.Dispose() }
-            $bitmap.Save((Join-Path $output "$asset.bmp"), [Drawing.Imaging.ImageFormat]::Bmp)
-        } finally { $bitmap.Dispose() }
-    } finally { $image.Dispose() }
-}
+                $graphics = [Drawing.Graphics]::FromImage($bitmap)
+                try {
+                    $background = if ($asset -like '*dark*') { [Drawing.Color]::FromArgb(21, 21, 23) } else { [Drawing.Color]::White }
+                    $graphics.Clear($background)
+                    if ($profileBrand) {
+                        $sidebar = $asset -eq 'uninstaller-sidebar'
+                        $size = [int]([Math]::Round($(if ($sidebar) { $image.Width * 0.72 } else { $image.Height * 0.58 })))
+                        $left = [int](($image.Width - $size) / 2)
+                        $top = [int]($image.Height * $(if ($sidebar) { 0.10 } else { 0.05 }))
+                        $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+                        $graphics.DrawImage($profileBrand, $left, $top, $size, $size)
+                        $fontSize = [single]$(if ($sidebar) { $image.Width * 0.10 } else { $image.Height * 0.105 })
+                        $font = [Drawing.Font]::new('Segoe UI', $fontSize, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
+                        $foreground = if ($asset -like '*dark*') { [Drawing.Color]::FromArgb(250, 249, 244) } else { [Drawing.Color]::FromArgb(36, 38, 63) }
+                        $brush = [Drawing.SolidBrush]::new($foreground)
+                        $format = [Drawing.StringFormat]::new()
+                        try {
+                            $format.Alignment = [Drawing.StringAlignment]::Center
+                            $labelTop = [single]($top + $size + $image.Height * 0.06)
+                            $bounds = [Drawing.RectangleF]::new(0, $labelTop, $image.Width, $image.Height - $labelTop)
+                            $graphics.DrawString('I/O Harness', $font, $brush, $bounds, $format)
+                        } finally { $format.Dispose(); $brush.Dispose(); $font.Dispose() }
+                    } else {
+                        $graphics.DrawImage($image, 0, 0, $image.Width, $image.Height)
+                    }
+                } finally { $graphics.Dispose() }
+                $bitmap.Save((Join-Path $output "$asset.bmp"), [Drawing.Imaging.ImageFormat]::Bmp)
+            } finally { $bitmap.Dispose() }
+        } finally { $image.Dispose() }
+    }
+} finally { if ($profileBrand) { $profileBrand.Dispose() } }
 Write-Output "Prepared native installer resources: $output"

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "state": "Partial",
+  "scope": "Reuse the existing approved I/O H mark in Windows setup and uninstall artwork, without altering official profile assets.",
+  "focusedPackagingAndProfileTests": { "files": 2, "passed": 15, "failed": 0 },
+  "finalArtworkSelectionCases": { "passed": 2, "failed": 0 },
+  "changedSourceTypeAwareLint": "passed",
+  "quickDocumentationChecks": { "passed": 21, "failed": 0 },
+  "bilingualReadmeUpdated": true,
+  "windowsRenderingQualified": false,
+  "freshPlatformPackagingQualified": false,
+  "publicInstallerPublished": false,
+  "providerOrSigningSecretsIncluded": false,
+  "legacyAccountAndDataIdentifiersChanged": false
+}
