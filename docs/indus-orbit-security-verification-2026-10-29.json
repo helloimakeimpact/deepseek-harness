@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "state": "Verified",
+  "productionState": "Partial",
+  "scope": "Compatible dependency fixes and independent Desktop runtime lock enforcement. No installer or hosted I/O credit release.",
+  "sourceParent": "d67b127ff2612faec549bdc030a65358a588b620",
+  "dependencyAudit": {
+    "command": "pnpm audit --prod --json",
+    "scope": "Resolved workspace production dependency graphs, including optional/build-related graphs; not an assembled installer payload audit.",
+    "before": {
+      "high": 11,
+      "moderate": 21,
+      "low": 3
+    },
+    "after": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 642,
+    "pnpmLockSha256": "181f78df66672cbc74403b76ed899e16aeed2fec9f209283d06f1ccbf84bf80e"
+  },
+  "runtimePolicy": {
+    "reviewedRuntimeOverrides": 11,
+    "workspaceToolingOverrides": 3,
+    "independentRuntimeReceivesOverrides": true,
+    "frozenRuntimeLockRejectsAffectedVersions": true,
+    "staleVersionTests": [
+      "zod@4.4.3",
+      "undici@8.11.2",
+      "@modelcontextprotocol/sdk@1.31.0",
+      "@hono/node-server@1.19.10"
+    ],
+    "upstreamPiAiPatchVersionPreserved": true
+  },
+  "regressions": {
+    "files": 9,
+    "passed": 238,
+    "failed": 0,
+    "surfaces": [
+      "runtime patch preparation and stale-lock rejection",
+      "private model broker and maintained provider adapter",
+      "streaming conversation updates",
+      "MCP protocol/egress",
+      "HTTP proxy policy",
+      "generated declarations under strict Node and browser consumer environments"
+    ]
+  },
+  "build": {
+    "command": "DSH_GATE_CONCURRENCY=1 NODE_OPTIONS=--max-old-space-size=4096 pnpm run build --profile indus-orbit",
+    "passed": 9,
+    "failed": 0,
+    "durationSeconds": 241.69,
+    "clientArtifacts": 335,
+    "publicValues": 6
+  },
+  "prePushTypecheck": {
+    "passed": 5,
+    "failed": 0,
+    "durationSeconds": 27.55
+  },
+  "liveTelnyx": {
+    "date": "2026-10-29",
+    "provider": "telnyx",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+    "attempts": 2,
+    "cases": [
+      {
+        "kind": "text",
+        "finish": "stop",
+        "usage": {
+          "inputTokens": 11,
+          "outputTokens": 2,
+          "totalTokens": 13
+        }
+      },
+      {
+        "kind": "tool",
+        "finish": "tool-calls",
+        "usage": {
+          "inputTokens": 273,
+          "outputTokens": 37,
+          "totalTokens": 310
+        }
+      }
+    ],
+    "estimatedInvocationCeilingUsd": 0.01,
+    "invoiceCostVerified": false,
+    "scope": "Native pi-ai adapter and private loopback broker to direct Telnyx. Synthetic gateway metadata; no hosted I/O grant, workspace charge or route activation.",
+    "retainsCredentialsPromptsOrGeneratedText": false
+  },
+  "builtHost": {
+    "date": "2026-10-29",
+    "state": "Verified",
+    "builtHost": true,
+    "profile": "desktop / indus-orbit",
+    "ready": true,
+    "selection": {
+      "provider": "indus-orbit",
+      "model": "io/harness-primary"
+    },
+    "models": 1,
+    "finish": "stop",
+    "providers": [
+      "deepseek-official",
+      "indus-orbit"
+    ],
+    "upstreamAccountDisabled": true,
+    "syntheticGatewayOperations": 1,
+    "realProviderCalls": 0,
+    "originalAccountStateTouched": false,
+    "hostedCreditGrant": false
+  },
+  "releaseHolds": [
+    "Audit the exact independently installed/assembled payload for each release target",
+    "Owned signing, notarization, installer and update/recovery qualification for macOS arm64, macOS x64 and Windows x64",
+    "Matched hosted native-credit backend release and genuine approval/expiry/revocation/receipt/invoice/cache acceptance",
+    "Working browser execution and real pairing",
+    "Public artifact URLs/checksums and platform install/upgrade acceptance"
+  ],
+  "branding": "Paused by owner; no new native or web branding applied in this engineering increment.",
+  "secretsIncluded": false,
+  "originalUpstreamAccountStateTouched": false
+}

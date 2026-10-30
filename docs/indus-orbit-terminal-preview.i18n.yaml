@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for indus-orbit-terminal-preview.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/indus-orbit-terminal-preview.md
+/indus-orbit-harness-preview:
+  en: 65cf606bd335043c
+  zh: f00a8b42f6671215
+/indus-orbit-harness-preview/summary:
+  en: 807a624c0b0cc4ad
+  zh: aacd45e935ae5120
+/indus-orbit-harness-preview/table-of-contents:
+  en: fa7df651eb1c2f7d
+  zh: aabd76e7e10bdc39
+/indus-orbit-harness-preview/source-and-identity:
+  en: ba0b23298ff405cd
+  zh: 8da6b5c593d294e5
+/indus-orbit-harness-preview/local-build:
+  en: c623940ee4c76ed0
+  zh: 16b13a52b046b572
+/indus-orbit-harness-preview/download-publication:
+  en: e75a494d6cbc3d0d
+  zh: ce2e4e71d06ff083
+/indus-orbit-harness-preview/compatibility-and-attribution:
+  en: 3d9c274a59dfa2e1
+  zh: 9c85e85096bedbac
+/indus-orbit-harness-preview/dev-note:
+  en: e5ddff6eb0f8e9d3
+  zh: 81616d0c9a0ccd4f
