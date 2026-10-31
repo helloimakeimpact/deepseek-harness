@@ -434,7 +434,13 @@ export class IndusAuth {
       stopped = Promise.reject(error instanceof Error ? error : new Error('Indus Orbit Host shutdown failed'))
     }
     const outcomes = await Promise.allSettled([clear, stopped])
-    const errors: unknown[] = outcomes.flatMap(outcome => outcome.status === 'rejected' ? [outcome.reason as unknown] : [])
+    const errors: unknown[] = []
+    for (const outcome of outcomes) {
+      if (outcome.status === 'rejected') {
+        const reason: unknown = outcome.reason
+        errors.push(reason)
+      }
+    }
     this.#set(errors.length === 0 ? 'signed-out' : 'failed')
     try { if (hadIdentity && outcomes[1].status === 'fulfilled') await this.#lost() } catch (error) { errors.push(error) }
     if (errors.length === 1) throw errors[0]

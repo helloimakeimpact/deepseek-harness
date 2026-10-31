@@ -100,6 +100,7 @@ Hot reload service with Cordis-compatible module configuration and events.
 
 ```ts cordis-catalog
 /** Serialize a caller-owned mutation with all automatic reload paths.
+ * Captured asynchronous context loses transaction authority when this operation settles.
  * @param operation Work that must not overlap module or configuration replacement.
  * @returns The operation result after its asynchronous work completes.
  */

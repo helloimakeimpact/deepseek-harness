@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { DesktopBackendController, type DesktopBackendState } from '../src/backend-controller.ts'
+import { DesktopBackendController, stopDesktopRuntime, type DesktopBackendState } from '../src/backend-controller.ts'
 
 function deferred() {
   let resolve!: () => void
@@ -23,6 +23,45 @@ function fixture() {
   const controller = new DesktopBackendController(create, state => states.push(state))
   return { controller, host, create, states, started, ready, stopping, exited, fail: (error: Error) => { fail(error) } }
 }
+
+describe('desktop runtime shutdown', () => {
+  it('starts Host shutdown after revocation without waiting for model requests to drain', async () => {
+    const brokerDrained = deferred()
+    const hostExited = deferred()
+    const calls: string[] = []
+    let done = false
+    const stopping = stopDesktopRuntime(
+      () => { calls.push('revoke'); return brokerDrained.promise },
+      () => { calls.push('stop host'); return hostExited.promise },
+    ).then(() => { done = true })
+    expect(calls).toEqual(['revoke', 'stop host'])
+    hostExited.resolve()
+    await Promise.resolve()
+    expect(done).toBe(false)
+    brokerDrained.resolve()
+    await stopping
+    expect(done).toBe(true)
+  })
+
+  it('starts and waits for both cleanups even when each fails', async () => {
+    const hostExited = deferred()
+    const modelError = new Error('model cleanup failed')
+    const hostError = new Error('host cleanup failed')
+    let hostStarted = false
+    const stopping = stopDesktopRuntime(
+      () => { throw modelError },
+      () => { hostStarted = true; return hostExited.promise },
+    )
+    expect(hostStarted).toBe(true)
+    hostExited.reject(hostError)
+    await expect(stopping).rejects.toMatchObject({ errors: [modelError, hostError] })
+  })
+
+  it('preserves a single cleanup error', async () => {
+    const error = new Error('host cleanup failed')
+    await expect(stopDesktopRuntime(async () => {}, async () => { throw error })).rejects.toBe(error)
+  })
+})
 
 describe('desktop backend controller', () => {
   it('shares preparation and startup between concurrent retries', async () => {

@@ -2,6 +2,22 @@
 
 import { desktopErrorState } from './startup-error.ts'
 
+/**
+ * Revoke model access before starting Host shutdown, then wait for both cleanups.
+ * A failure in either cleanup cannot prevent the other from starting or finishing.
+ */
+export async function stopDesktopRuntime(revokeModel: () => Promise<void>, stopHost: () => Promise<void>): Promise<void> {
+  const start = async (operation: () => Promise<void>): Promise<void> => { await operation() }
+  const results = await Promise.allSettled([start(revokeModel), start(stopHost)])
+  const failures: unknown[] = []
+  for (const result of results) if (result.status === 'rejected') {
+    const failure: unknown = result.reason
+    failures.push(failure)
+  }
+  if (failures.length === 1) throw failures[0]
+  if (failures.length > 1) throw new AggregateError(failures, 'desktop runtime cleanup failed')
+}
+
 /** Backend availability presented by the desktop window. */
 export type DesktopBackendState =
   | { readonly phase: 'starting' }

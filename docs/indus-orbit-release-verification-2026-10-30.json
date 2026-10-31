@@ -170,11 +170,25 @@
         "heldCredentialRemoval": true,
         "preparedCallAfterShutdown": "aborted",
         "realProviderCalls": 0
+      },
+      "concurrentBrokerAndHostTeardown": {
+        "repair": "Invoke broker revocation first, start Host shutdown without awaiting broker drain, and await both cleanups. Preserve a sole failure and aggregate simultaneous failures.",
+        "focusedBarrierAndIdentityChecks": {
+          "files": 4,
+          "passed": 93,
+          "failed": 0
+        },
+        "desktopStartupAndUpdateTests": {
+          "files": 1,
+          "passed": 125,
+          "failed": 0
+        },
+        "scope": "Synthetic cleanup barriers and existing startup/update integration; not end-to-end OS process qualification."
       }
     },
     "browserExecutionDecision": "Owner requires Observe, Plan, Build and Run together. Permission enforcement, owned Host bridge and execution acceptance remain incomplete; inspection pairing is not execution authority.",
-    "remoteAcceptance": "Pending new candidate commit and exact-head CI; earlier run41061344707 failed",
-    "windowsAclQualification": "Two updated native Windows test files collect but all49 cases skip on macOS. Protected repair-fixture preconditions, nested cross-root delete assertions and failure-only ACE/token diagnostics require actual Windows CI. Directory denial remains ERROR_ACCESS_DENIED=5; its prior DIRECTORY:OK outcome remains unresolved; no production ACL change.",
+    "remoteAcceptance": "CI run 41128540101 failed on the d5b05445 candidate; follow-up source changes require new exact-head CI.",
+    "windowsAclQualification": "Windows coverage run 41128540101 failed two cross-root/directory ACL cases and one diagnostic-fixture case. A pre-existing child had explicit ambient full-control ACEs ordered before an inherited delete-child denial; a post-grant child was denied. Restricted-child cross-root deletion also failed its denial assertion. Cause and safe remediation remain under investigation; Windows isolation is not qualified and no production ACL change is claimed.",
     "typeAggregates": {
       "passed": 2,
       "failed": 0,
@@ -189,6 +203,23 @@
     "incrementalTypecheck": {
       "passed": 5,
       "failed": 0
+    },
+    "latestCiDiagnostics": {
+      "runId": 41128540101,
+      "state": "failed",
+      "linuxCoverage": "One repository policy workflow assertion was stale after the earlier fork-specific preflight change; targeted workflow checks corrected locally.",
+      "windowsCoverage": "Four tests failed: the same workflow assertion and three Windows ACL-related cases.",
+      "browserSnapshots": "One requested-SVG browser case reported a WebSocket disconnection; other 740 cases passed and 15 were skipped. All three SVG journey cases pass locally without retry; the remote failure root cause is not established.",
+      "static": "A newly introduced unknown cast violated the no-new-casts rule; removed locally.",
+      "catalog": "Windows observational checks found stale generated Cordis references; regenerated locally.",
+      "passingLanes": [
+        "Node 22.19",
+        "Node 24.9",
+        "Node 26",
+        "Windows native tests (not the Windows ACL suite)",
+        "Python SDK and release matrix",
+        "benchmarks"
+      ]
     }
   },
   "publishedPreview": {

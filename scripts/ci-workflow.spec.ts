@@ -1382,14 +1382,33 @@ describe('Issue lifecycle workflow', () => {
     expect(preflightStep?.run).toContain('if [ -f .github/issue-management/selective-preflight.json ]; then')
     expect(preflightStep?.run).toContain('node .github/issue-management/policy.mjs pr-preflight')
     expect(preflightStep?.if).toBeUndefined()
-    expect(policyJob.if).toBe("${{ github.repository == 'deepseek-ai/deepseek-harness' }}")
-    expect(evaluateRunsOn(policyJob.if, { github: { repository: 'helloimakeimpact/deepseek-harness' } })).toBe(false)
-    expect(evaluateRunsOn(policyJob.if, { github: { repository: 'deepseek-ai/deepseek-harness' } })).toBe(true)
-    expect(validateStep?.if).toBe("${{ steps.preflight.outputs.legacy-automated != 'true' }}")
+    expect(policyJob.if).toBeUndefined()
+    expect(preflightStep?.run).toContain('helloimakeimpact/deepseek-harness)')
+    expect(preflightStep?.run).toContain("printf 'policy-scope=indus-orbit\\nneeds-project=false\\n'")
+    expect(preflightStep?.run).toContain('deepseek-ai/deepseek-harness) ;;')
+    expect(preflightStep?.run).toContain('Issue policy has no trusted policy owner')
+    expect(validateStep?.if).toBe("${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.legacy-automated != 'true' }}")
+
+    // GitHub expressions permit hyphens in property names; JavaScript needs brackets.
+    const evaluatePolicyStep = (condition: unknown, context: Record<string, unknown>) => {
+      if (typeof condition !== 'string') throw new TypeError('Policy condition must be a string')
+      return evaluateRunsOn(condition.replaceAll('.needs-project', "['needs-project']").replaceAll('.legacy-automated', "['legacy-automated']"), context)
+    }
+    for (const repository of ['helloimakeimpact/deepseek-harness', 'unexpected/repository']) {
+      const context = { github: { repository }, steps: { preflight: { outputs: { 'needs-project': 'true', 'legacy-automated': 'false' } } } }
+      expect(evaluatePolicyStep(tokenStep?.if, context)).toBe(false)
+      expect(evaluatePolicyStep(validateStep?.if, context)).toBe(false)
+    }
+    const upstream = { github: { repository: 'deepseek-ai/deepseek-harness' }, steps: { preflight: { outputs: { 'needs-project': 'true', 'legacy-automated': 'false' } } } }
+    expect(evaluatePolicyStep(tokenStep?.if, upstream)).toBe(true)
+    expect(evaluatePolicyStep(validateStep?.if, upstream)).toBe(true)
+    const exempt = { github: upstream.github, steps: { preflight: { outputs: { 'needs-project': 'false', 'legacy-automated': 'true' } } } }
+    expect(evaluatePolicyStep(tokenStep?.if, exempt)).toBe(false)
+    expect(evaluatePolicyStep(validateStep?.if, exempt)).toBe(false)
 
     expect(tokenStep).toMatchObject({
       id: 'app-token',
-      if: "${{ steps.preflight.outputs.needs-project == 'true' }}",
+      if: "${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.needs-project == 'true' }}",
       uses: 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1',
       with: {
         'client-id': '${{ vars.DSH_ISSUE_APP_CLIENT_ID }}',
