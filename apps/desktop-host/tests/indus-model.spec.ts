@@ -8,7 +8,7 @@ import Loader, { type ModuleLoaderV2 } from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import LlmRuntime, { BlockAssembler, createUserMessage, createToolResultMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import type { GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
-import { describe, expect, it, onTestFinished } from 'vitest'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { IndusModelBroker } from '../../desktop/src/indus-model-broker.ts'
 import { IndusAuth } from '../../desktop/src/indus-auth.ts'
 import { IndusModelAdapter, indusModelPlugin, parseIndusHostConnection } from '../src/indus-model.ts'
@@ -23,17 +23,20 @@ const frames = (tool: boolean) => [
   { choices: [{ delta: {}, index: 0, finish_reason: tool ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 100, completion_tokens: 4, prompt_tokens_details: { cached_tokens: 80 } } },
 ].map(value => `data: ${JSON.stringify(value)}\n\n`).join('') + 'data: [DONE]\n\n'
 
-async function fixture() {
+async function fixture(clear = (): Promise<void> => Promise.resolve()) {
   const root = await mkdtemp(join(tmpdir(), 'indus-model-composition-'))
   onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
   let connected = true
   let tools = false
   let failPaid = false
+  let stopHost = (): Promise<void> => Promise.resolve()
+  const stopped = Promise.withResolvers<undefined>()
+  const lost = vi.fn((): Promise<void> => Promise.resolve())
   const wire: { url: string; headers: Headers; body: Record<string, unknown> }[] = []
   const auth = new IndusAuth({
     config: { clientId: '11111111-1111-4111-8111-111111111111', callbackPort: 43189 },
-    store: { read: () => Promise.resolve('synthetic-refresh'), write: () => Promise.resolve(), clear: () => Promise.resolve() },
-    open: () => Promise.resolve(), notify: () => {}, lost: () => Promise.resolve(),
+    store: { read: () => Promise.resolve('synthetic-refresh'), write: () => Promise.resolve(), clear },
+    open: () => Promise.resolve(), notify: () => {}, lost, stop: () => stopHost(),
     fetch: (input, init) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
       if (url.endsWith('/oauth/token')) return Promise.resolve(Response.json({ access_token: 'synthetic-main-access', refresh_token: 'synthetic-refresh-next', token_type: 'bearer', expires_in: 3600 }))
@@ -55,6 +58,11 @@ async function fixture() {
   const connection = await broker.start()
   const ctx = new Context()
   onTestFinished(async () => { await ctx.fiber.dispose() })
+  stopHost = async () => {
+    await broker.close()
+    await ctx.fiber.dispose()
+    stopped.resolve(undefined)
+  }
   ctx.baseUrl = pathToFileURL(root).href + '/'
   await ctx.plugin(Loader)
   ctx.loader.builtins.include = Include
@@ -77,7 +85,7 @@ async function fixture() {
   await ctx.loader.await()
   for (const entry of ctx.loader.entries()) await entry.fiber?.await()
   return {
-    ctx, wire, auth, connection, config,
+    ctx, wire, auth, connection, config, lost, stopped: stopped.promise,
     setConnected: (value: boolean) => { connected = value },
     useTools: () => { tools = true }, failPaid: () => { failPaid = true },
   }
@@ -90,6 +98,27 @@ async function turn(ctx: Context, options: Partial<GenerateOptions> = {}) {
 }
 
 describe('Indus model Loader composition', () => {
+  it('closes the actual broker and Loader while encrypted credential removal is held', async () => {
+    const clearing = Promise.withResolvers<undefined>()
+    const clearStarted = Promise.withResolvers<undefined>()
+    onTestFinished(() => { clearing.resolve(undefined) })
+    const f = await fixture(async () => { clearStarted.resolve(undefined); await clearing.promise })
+    expect(await f.ctx.llm.listModels('indus-orbit')).toHaveLength(1)
+    const signingOut = f.auth.signOut()
+    onTestFinished(async () => { clearing.resolve(undefined); await signingOut })
+    await clearStarted.promise
+    await f.stopped
+    expect(f.auth.state).toBe('signed-out')
+    expect(f.lost).not.toHaveBeenCalled()
+    await expect(fetch(`${f.connection.baseURL}/models`, {
+      headers: { authorization: `Bearer ${f.connection.capability}` },
+    })).rejects.toThrow()
+    expect(f.wire).toHaveLength(0)
+    clearing.resolve(undefined)
+    await signingOut
+    expect(f.lost).toHaveBeenCalledOnce()
+  })
+
   it('does not replay a failed paid attempt through SDK or provider retries', async () => {
     const f = await fixture()
     f.failPaid()
@@ -150,14 +179,17 @@ describe('Indus model Loader composition', () => {
 
   it('refuses a revoked funding connection and does not send a paid request or fall back', async () => {
     const f = await fixture()
+    const prepared = await f.ctx.llm.prepareCall({ provider: 'indus-orbit', model: 'io/harness-primary', maxTokens: 64 })
     f.setConnected(false)
     expect(await f.ctx.llm.listModels('indus-orbit')).toEqual([])
     const result = await turn(f.ctx)
     expect(result.finish.kind).toBe('error')
     expect(f.wire).toHaveLength(0)
     await f.auth.signOut()
-    const next = await turn(f.ctx)
-    expect(next.finish.kind).toBe('error')
+    expect(f.ctx.get('llm')).toBeUndefined()
+    const next = new BlockAssembler()
+    for await (const chunk of prepared.stream({ ...prepared.config, messages: ask() })) next.push(chunk)
+    expect(next.finish.kind).toBe('aborted')
     expect(f.wire).toHaveLength(0)
   })
 })

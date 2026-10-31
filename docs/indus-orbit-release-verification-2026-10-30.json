@@ -4,23 +4,235 @@
   "state": "Verified",
   "productionState": "Partial",
   "scope": "Focused CI corrections and explicit native identity profile; no signed installer or hosted credit release.",
-  "ciRegressions": { "files": 4, "passed": 265, "failed": 0 },
-  "identityAndPackaging": { "files": 6, "passed": 61, "failed": 0 },
+  "ciRegressions": {
+    "files": 4,
+    "passed": 265,
+    "failed": 0
+  },
+  "identityAndPackaging": {
+    "files": 6,
+    "passed": 61,
+    "failed": 0
+  },
   "workspaceConstraints": "passed",
-  "changedSourceLint": { "files": 13, "passed": true },
-  "build": { "profile": "indus-orbit", "passed": 9, "failed": 0, "durationSeconds": 41.18 },
-  "typecheck": { "passed": 5, "failed": 0, "durationSeconds": 7.47 },
+  "changedSourceLint": {
+    "files": 13,
+    "passed": true
+  },
+  "build": {
+    "profile": "indus-orbit",
+    "passed": 9,
+    "failed": 0,
+    "durationSeconds": 41.18
+  },
+  "typecheck": {
+    "passed": 5,
+    "failed": 0,
+    "durationSeconds": 7.47
+  },
   "priorRemoteCi": {
     "runId": 40973370426,
     "state": "failed",
-    "correctedLocally": ["unsupported coverage partition count", "missing required Host profile in allowed package files"],
-    "unresolved": ["headless DeepSeek defaults expected-output case recorded three mock requests instead of two"],
-    "focusedUnchangedHeadlessCase": { "passed": 1, "skipped": 17, "resolvesRemoteFailure": false }
+    "correctedLocally": [
+      "unsupported coverage partition count",
+      "missing required Host profile in allowed package files"
+    ],
+    "unresolved": [
+      "headless DeepSeek defaults expected-output case recorded three mock requests instead of two"
+    ],
+    "focusedUnchangedHeadlessCase": {
+      "passed": 1,
+      "skipped": 17,
+      "resolvesRemoteFailure": false
+    }
+  },
+  "nativeCiFinalization": {
+    "observedRunId": 41061344707,
+    "remoteState": "failed; repairs require a new remote run",
+    "scope": "Required Issue policy, product menu regression, generated license notice and repository schema-extraction budget only.",
+    "repairs": [
+      "The required Issue policy job is unconditional. Trusted credential-free preflight distinguishes the exact upstream repository from the owned Indus Orbit fork and rejects unknown or absent repository identities. Both Project token minting and upstream validation explicitly require the upstream repository; fork runs do not consume upstream organization credentials.",
+      "The official-profile macOS menu expectation uses the product display name DeepSeek Harness, independently of Electron app.name diagnostic metadata. The I/O profile retains its existing I/O Harness identity; production menu behavior is unchanged.",
+      "The notices generator records Apache-2.0 for overridden @modelcontextprotocol/client 2.3.0; installed 2.2.0 metadata remains MIT.",
+      "The request-header epoch regression now takes DSH_COVERAGE_TEST_TIMEOUT_MS without capping a wider configured lane. Its local default is 90000 ms, matching the existing real-repository persistence-schema extraction case. No workflow budget, worker concurrency, retry or assertion was weakened."
+    ],
+    "schemaExtractionEvidence": {
+      "linuxCoverageJobId": 124081574475,
+      "observedCaseDurationMs": 60615,
+      "previousExplicitCaseTimeoutMs": 60000,
+      "configuredLaneTimeoutMs": 90000,
+      "operation": "Synchronous full-repository TypeScript program construction, reachable persistence declaration validation and canonical schema hashing.",
+      "classification": "The explicit case timeout lowered the existing lane budget. No resource collision, lifecycle race or compiler performance root cause is established.",
+      "localQualification": "Mocked test registration rejects the pre-fix 60000 ms cap under a 90000 ms lane. Current registration preserves absent/empty local defaults and configured 30000, 90000 and 180000 ms budgets, refuses malformed input and invokes zero repository schema extractions.",
+      "actualInstrumentedExtractionAfterRepair": "pending remote CI; not executed on the constrained local host"
+    },
+    "localChecks": [
+      {
+        "command": "node --test .github/issue-management/policy.test.mjs",
+        "passed": 51,
+        "failed": 0
+      },
+      {
+        "command": "pnpm exec vitest run scripts/gen-third-party-notices.spec.ts apps/desktop/tests/main-startup.spec.ts apps/desktop/tests/product-profile.spec.ts --maxWorkers=1",
+        "files": 3,
+        "passed": 166,
+        "failed": 0
+      },
+      {
+        "command": "pnpm run gen-third-party-notices",
+        "result": "passed; one generated license row changed"
+      },
+      {
+        "command": "pnpm exec vitest run scripts/coverage-partitions.spec.ts -t 'lane test budget' --maxWorkers=1",
+        "passed": 9,
+        "failed": 0
+      },
+      {
+        "command": "Mocked registration of scripts/persistence-epoch-header.spec.ts through TypeScript transpilation and isolated VM evaluation",
+        "result": "passed; pre-fix negative control, five budget cases, invalid-input refusal and zero heavy extraction calls"
+      },
+      {
+        "command": "pnpm exec tsx scripts/run-oxlint.ts --type-aware apps/desktop/tests/main-startup.spec.ts .github/issue-management/policy.test.mjs",
+        "result": "passed"
+      },
+      {
+        "command": "pnpm exec tsx scripts/run-oxlint.ts --type-aware scripts/persistence-epoch-header.spec.ts",
+        "result": "passed"
+      },
+      {
+        "command": "actionlint 1.7.12 -shellcheck= .github/workflows/issue-policy.yml",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "qualificationLimits": "Focused local checks do not establish green aggregate CI, a passing instrumented schema extraction or cross-platform release readiness. The separate terminal snapshot, worker-runtime resolver and final aggregate typecheck are outside this repair receipt."
   },
   "fullRepositoryLintCompleted": false,
   "signedForkPackagingEnabled": false,
   "upstreamUpdateFeedEnabledForFork": false,
-  "publicInstallerPublished": false,
+  "publicInstallerPublished": true,
   "hostedCreditExecutionQualified": false,
-  "secretsIncluded": false
+  "secretsIncluded": false,
+  "runtimeFinalization": {
+    "state": "Verified",
+    "productionState": "Partial",
+    "candidate": "Native PR #2; no replacement public installer published by this source continuation",
+    "workerResolver": {
+      "negativeControl": "Installed Zod throws Cannot access globalConfig before initialization through the previous Worker loader",
+      "repair": "Apply documented condition priority browser, require, import, default; packer and runtime share resolution; reject stale image contract",
+      "focusedTests": {
+        "files": 3,
+        "passed": 28,
+        "failed": 0
+      },
+      "imageBuild": "passed",
+      "packedImageTests": {
+        "files": 4,
+        "passed": 43,
+        "failed": 0
+      }
+    },
+    "hmrAuthority": {
+      "repair": "Expire transaction authority on operation settlement; reject true nesting and settled-context reconciliation; serialize later watcher work",
+      "focusedTests": {
+        "passed": 47,
+        "failed": 0
+      },
+      "finalCoordinationTests": {
+        "passed": 16,
+        "failed": 0
+      }
+    },
+    "browserAcceptance": {
+      "command": "pnpm exec vitest run --config vitest.web.config.ts apps/web/tests/preview-boot.e2e.ts apps/web/tests/sidebar-terminal.e2e.ts -t 'boots the packed worker deployment|preserves program palettes'",
+      "passed": 2,
+      "skippedByNameFilter": 10,
+      "failed": 0,
+      "durationSeconds": 44.17,
+      "realChromium": true,
+      "syntheticProvider": true
+    },
+    "signOut": {
+      "repair": "Start Host shutdown before credential removal settles; invalidate identity/model requests synchronously; share concurrent sign-out operation; await both cleanup owners; preserve recovery if Host shutdown fails",
+      "privateBrokerAndStartupTests": {
+        "files": 3,
+        "passed": 148,
+        "failed": 0
+      },
+      "realProviderCalls": 0,
+      "actualLoaderComposition": {
+        "files": 1,
+        "passed": 7,
+        "failed": 0,
+        "heldCredentialRemoval": true,
+        "preparedCallAfterShutdown": "aborted",
+        "realProviderCalls": 0
+      },
+      "concurrentBrokerAndHostTeardown": {
+        "repair": "Invoke broker revocation first, start Host shutdown without awaiting broker drain, and await both cleanups. Preserve a sole failure and aggregate simultaneous failures.",
+        "focusedBarrierAndIdentityChecks": {
+          "files": 4,
+          "passed": 93,
+          "failed": 0
+        },
+        "desktopStartupAndUpdateTests": {
+          "files": 1,
+          "passed": 125,
+          "failed": 0
+        },
+        "scope": "Synthetic cleanup barriers and existing startup/update integration; not end-to-end OS process qualification."
+      }
+    },
+    "browserExecutionDecision": "Owner requires Observe, Plan, Build and Run together. Permission enforcement, owned Host bridge and execution acceptance remain incomplete; inspection pairing is not execution authority.",
+    "remoteAcceptance": "CI run 41192146327 failed on static documentation references and Windows ACL cases; follow-up source changes require new exact-head CI.",
+    "windowsAclQualification": "Windows coverage run 41192146327 reproduced cross-workspace deletion inside pre-existing directories; analogous post-grant directories denied deletion. Existing child DACLs may place explicit ambient full-control entries before an inherited delete-child denial. Safe remediation and Windows acceptance remain incomplete; no production ACL change is claimed. A separate diagnostic test compared icacls path-prefixed and unprefixed lines; the local correction compares the existing normalized ACL entries without weakening preservation.",
+    "typeAggregates": {
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 69.13,
+      "artifacts": "Current desktop and Worker declarations rebuilt; HMR artifact and packed preview rebuilt"
+    },
+    "quickDocumentationChecks": {
+      "passed": 21,
+      "failed": 0
+    },
+    "localResourceRecovery": "An initial aggregate was stopped after disk exhaustion; unused ignored desktop staging and inactive packaged-app build output were removed. Source, user data and public release assets remain. Both aggregates and the bounded desktop tests then pass.",
+    "incrementalTypecheck": {
+      "passed": 5,
+      "failed": 0
+    },
+    "latestCiDiagnostics": {
+      "runId": 41192146327,
+      "state": "failed",
+      "linuxCoverage": "passed",
+      "browserSnapshots": "passed",
+      "windowsCoverage": "failed: cross-root deletion, directory access and diagnostic fixture",
+      "static": "failed: repository-reference rule rejected a commit identifier in this release record; corrected locally",
+      "passingLanes": [
+        "Linux coverage",
+        "browser snapshots and artifacts",
+        "Node 22.19",
+        "Node 24.9",
+        "Node 26",
+        "Windows native tests (not the Windows ACL suite)",
+        "Python SDK and release matrix",
+        "benchmarks"
+      ],
+      "followUp": "The Windows ACL runner and diagnostic suites are added to the required Windows native CI lane. The cross-root and directory assertions remain unchanged and will block the required verdict until resolved."
+    }
+  },
+  "publishedPreview": {
+    "version": "0.2.1-rc.3.20261030.4.1",
+    "source": "Previously published preview, separate from the PR #2 candidate",
+    "targets": [
+      "darwin-arm64",
+      "darwin-x64",
+      "win32-x64"
+    ],
+    "signed": false,
+    "hostedCreditExecutionQualified": false
+  }
 }

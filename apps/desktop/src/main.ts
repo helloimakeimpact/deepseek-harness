@@ -28,7 +28,7 @@ import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError 
 import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-view.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
-import { DesktopBackendController } from './backend-controller.ts'
+import { DesktopBackendController, stopDesktopRuntime } from './backend-controller.ts'
 import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } from './ipc.ts'
 import { readDeviceInfo } from './device-info.ts'
 import { desktopUpdateReadyConfirmation, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
@@ -326,9 +326,9 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 }
 
 async function main(): Promise<void> {
-  const indusIdentity = product.profile === 'official' ? undefined : await requireIndusIdentity(async () => {
-    await stopForRecovery()
-    quitWithoutConfirmation()
+  const indusIdentity = product.profile === 'official' ? undefined : await requireIndusIdentity({
+    stop: () => stopForRecovery(),
+    lost: () => { quitWithoutConfirmation(); return Promise.resolve() },
   })
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
   void pruneCrashReports(app.getPath('logs'))
@@ -526,15 +526,14 @@ async function main(): Promise<void> {
       stop: async () => {
         analyticsEnabled = false
         stopAccount?.()
-        try { await modelBroker?.close() }
-        finally {
+        await stopDesktopRuntime(async () => { await modelBroker?.close() }, async () => {
           try { await host.stop(requireCleanStop) }
           catch (error) {
             if (!requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
             // Backend cleanup succeeded; installation still rejects the unsuccessful task teardown.
             updateStopFailure = error
           }
-        }
+        })
       },
       updateTasks: (action: 'inspect' | 'lock' | 'unlock') => host.updateTasks(action),
       inspectQuit: () => host.inspectQuit(),

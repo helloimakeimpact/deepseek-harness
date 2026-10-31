@@ -3,6 +3,7 @@ import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { Context } from '@deepseek-ai/cordis'
 import Loader, { ModuleLoader } from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
@@ -57,6 +58,62 @@ it('serializes mutations, rejects nesting and keeps the queue usable after failu
   await rejection
   await second
   expect(order).toEqual([1, 2])
+})
+
+it('queues work from a settled transaction context behind the current mutation', async () => {
+  const { hmr } = await fixture()
+  const resume = await hmr.runExclusive(async () => AsyncLocalStorage.snapshot())
+  const release = Promise.withResolvers<undefined>()
+  onTestFinished(() => { release.resolve(undefined) })
+  const entered = Promise.withResolvers<undefined>()
+  const order: string[] = []
+  const current = hmr.runExclusive(async () => {
+    entered.resolve(undefined)
+    await release.promise
+    order.push('current')
+  })
+  await entered.promise
+  const later = resume(() => hmr.runExclusive(async () => { order.push('later') }))
+  const completed = expect(later).resolves.toBeUndefined()
+  expect(order).toEqual([])
+  release.resolve(undefined)
+  await current
+  await completed
+  expect(order).toEqual(['current', 'later'])
+})
+
+it('rejects reconciliation authority retained from a settled transaction', async () => {
+  const { hmr } = await fixture()
+  const resume = await hmr.runExclusive(async () => AsyncLocalStorage.snapshot())
+  await expect(resume(() => hmr.reconcileProfile())).rejects.toThrow('must run inside runExclusive')
+})
+
+it('releases transaction authority after a failed operation', async () => {
+  const { hmr } = await fixture()
+  let resume: ReturnType<typeof AsyncLocalStorage.snapshot> | undefined
+  await expect(hmr.runExclusive(async () => {
+    resume = AsyncLocalStorage.snapshot()
+    throw new Error('mutation failed')
+  })).rejects.toThrow('mutation failed')
+  if (resume === undefined) throw new Error('transaction context was not captured')
+  await expect(resume(() => hmr.runExclusive(async () => 'recovered'))).resolves.toBe('recovered')
+})
+
+it('refreshes a watcher notification retaining a settled registration transaction', async () => {
+  const { ctx, hmr, dir } = await fixture()
+  const filename = join(dir, 'package.json')
+  writeFileSync(filename, '{}')
+  const observed = Promise.withResolvers<string>()
+  const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => { observed.resolve('failed') })
+  onTestFinished(() => { warn.mockRestore() })
+  const resume = await hmr.runExclusive(async () => {
+    await hmr.watchConfig(filename, async () => { observed.resolve('refreshed') })
+    return AsyncLocalStorage.snapshot()
+  })
+  resume(() => watchers.at(-1)!.emit('change', filename))
+  expect(await observed.promise).toBe('refreshed')
+  await hmr.runExclusive(async () => {})
+  expect(warn).not.toHaveBeenCalled()
 })
 
 it('holds configuration handlers behind configuration mutations', async () => {

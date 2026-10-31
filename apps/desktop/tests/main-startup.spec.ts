@@ -996,6 +996,7 @@ describe('desktop main startup', () => {
   })
 
   it.each(['darwin', 'linux'] as const)('adds the product File menu and standard window commands only on macOS (%s)', async (platform) => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'official')
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
     await import('../src/main.ts')
     await harness.preparing.promise
@@ -1006,8 +1007,9 @@ describe('desktop main startup', () => {
       .find(items => items.some(item => item.role === 'editMenu'))
     if (template === undefined) throw new Error('application menu missing')
     expect(template.map(describeItem)).toEqual(platform === 'darwin'
-      ? ['Desktop test', en.fileMenu, 'editMenu', 'windowMenu']
+      ? ['DeepSeek Harness', en.fileMenu, 'editMenu', 'windowMenu']
       : ['Application', 'editMenu'])
+    expect(template[0]!.label).not.toBe(harness.app.name)
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
       ? ['about', 'separator', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']

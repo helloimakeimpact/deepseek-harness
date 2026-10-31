@@ -451,6 +451,7 @@ describe.skipIf(!isWin32 || !pwshAvailable())('windows-acl runner', () => {
     const otherTemp = join(scratchRoot, 'other-temp')
     mkdirSync(otherWorkspace)
     mkdirSync(otherTemp)
+    for (const root of [otherWorkspace, otherTemp]) mkdirSync(join(root, 'before-grant'))
     const otherWorkspaceSid = workspaceWriteSid(otherWorkspace)
     const otherTempSid = tempWriteSid(otherTemp)
     const otherWorkspaceGrant = AclWriteGrant.create(otherWorkspaceSid)
@@ -462,6 +463,7 @@ describe.skipIf(!isWin32 || !pwshAvailable())('windows-acl runner', () => {
     const ownTemp = join(scratchRoot, 'own-temp')
     mkdirSync(ownWorkspace)
     mkdirSync(ownTemp)
+    for (const root of [ownWorkspace, ownTemp]) mkdirSync(join(root, 'before-grant'))
     const ownWorkspaceSid = workspaceWriteSid(ownWorkspace)
     const ownTempSid = tempWriteSid(ownTemp)
     const ownWorkspaceGrant = AclWriteGrant.create(ownWorkspaceSid)
@@ -469,11 +471,15 @@ describe.skipIf(!isWin32 || !pwshAvailable())('windows-acl runner', () => {
     ownWorkspaceGrant.add(ownWorkspace, true)
     ownTempGrant.add(ownTemp)
     try {
-      const victims = {
+      const roots = { ownWork: ownWorkspace, otherWork: otherWorkspace, ownTemp, otherTemp }
+      for (const root of Object.values(roots)) mkdirSync(join(root, 'after-grant'))
+      const victims: Record<string, string> = {
         ownWork: join(ownWorkspace, 'victim.txt'),
         otherWork: join(otherWorkspace, 'victim.txt'),
         ownTemp: join(ownTemp, 'victim.txt'),
         otherTemp: join(otherTemp, 'victim.txt'),
+        ...Object.fromEntries(Object.entries(roots).flatMap(([name, root]) =>
+          ['before-grant', 'after-grant'].map(phase => [`${name}-${phase}`, join(root, phase, 'victim.txt')] as const))),
       }
       for (const path of Object.values(victims)) writeFileSync(path, 'delete me')
       const probe = [
@@ -487,14 +493,11 @@ describe.skipIf(!isWin32 || !pwshAvailable())('windows-acl runner', () => {
         '--', 'pwsh', '/NoLogo', '/NonInteractive', '/NoProfile', '/Command', probe,
       ])
       expect(result.status, `stderr: ${result.stderr}`).toBe(0)
-      expect(result.stdout).toContain('ownWork: DELETED')
-      expect(result.stdout).toContain('ownTemp: DELETED')
-      expect(result.stdout).toContain('otherWork: DENIED')
-      expect(result.stdout).toContain('otherTemp: DENIED')
-      expect(existsSync(victims.otherWork)).toBe(true)
-      expect(existsSync(victims.otherTemp)).toBe(true)
-      expect(existsSync(victims.ownWork)).toBe(false)
-      expect(existsSync(victims.ownTemp)).toBe(false)
+      for (const [name, path] of Object.entries(victims)) {
+        const own = name.startsWith('own')
+        expect(result.stdout, name).toContain(`${name}: ${own ? 'DELETED' : 'DENIED'}`)
+        expect(existsSync(path), name).toBe(!own)
+      }
     } finally {
       ownWorkspaceGrant.dispose()
       ownTempGrant.dispose()
@@ -542,6 +545,8 @@ describe.skipIf(!isWin32 || !pwshAvailable())('windows-acl runner', () => {
     const grant = AclWriteGrant.create(workspaceWriteSid(granted))
     grant.add(granted, true)
     try {
+      const afterGrant = join(granted, 'after-grant')
+      mkdirSync(afterGrant)
       const probe = `
 $ErrorActionPreference='SilentlyContinue'
 Add-Type -Namespace P -Name F -MemberDefinition @'
@@ -549,20 +554,97 @@ Add-Type -Namespace P -Name F -MemberDefinition @'
 public static extern IntPtr CreateFileW(string n, uint a, uint s, IntPtr sa, uint d, uint f, IntPtr t);
 [DllImport("kernel32.dll", SetLastError=true)]
 public static extern bool CloseHandle(IntPtr h);
-'@ | Out-Null
-function TryOpen([string]$label, [string]$path) {
-  $h = [P.F]::CreateFileW($path, 0x10000000, 7, [IntPtr]::Zero, 3, 0x02000000, [IntPtr]::Zero)
-  if ($h -eq [IntPtr]::new(-1)) { "$($label): DENIED" } else { [void][P.F]::CloseHandle($h); "$($label): OK" }
+[DllImport("kernel32.dll")]
+public static extern IntPtr GetCurrentProcess();
+[DllImport("advapi32.dll", SetLastError=true)]
+public static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+[DllImport("advapi32.dll", SetLastError=true)]
+public static extern bool GetTokenInformation(IntPtr token, int info, IntPtr buffer, uint length, out uint needed);
+[DllImport("advapi32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
+public static extern bool LookupPrivilegeValue(string system, string name, out long luid);
+public static string PrivilegeAttributes(string name) {
+  long target;
+  if (!LookupPrivilegeValue(null, name, out target)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+  IntPtr token;
+  if (!OpenProcessToken(GetCurrentProcess(), 8, out token)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+  try {
+    uint needed;
+    bool sized = GetTokenInformation(token, 3, IntPtr.Zero, 0, out needed);
+    int error = Marshal.GetLastWin32Error();
+    if (sized || error != 122 || needed < 4 || needed > 65536) throw new System.InvalidOperationException("Unexpected token privilege buffer: " + error + "/" + needed);
+    IntPtr buffer = Marshal.AllocHGlobal((int)needed);
+    try {
+      if (!GetTokenInformation(token, 3, buffer, needed, out needed)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+      int count = Marshal.ReadInt32(buffer);
+      if (count < 0 || count > (needed - 4) / 12) throw new System.InvalidOperationException("Invalid token privilege count");
+      for (int i = 0; i < count; i++) {
+        int offset = 4 + i * 12;
+        if (Marshal.ReadInt64(buffer, offset) == target) return "0x" + Marshal.ReadInt32(buffer, offset + 8).ToString("x8");
+      }
+      return "absent";
+    } finally { Marshal.FreeHGlobal(buffer); }
+  } finally { CloseHandle(token); }
 }
-TryOpen 'FILE' '${join(granted, 'file.txt')}'
-TryOpen 'NESTED-FILE' '${join(child, 'deep.txt')}'
-TryOpen 'DIRECTORY' '${child}'
+'@ | Out-Null
+function OpenResult([string]$path, [uint32]$access) {
+  $h = [P.F]::CreateFileW($path, $access, 7, [IntPtr]::Zero, 3, 0x02000000, [IntPtr]::Zero)
+  $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+  if ($h -eq [IntPtr]::new(-1)) { return @{ result = 'DENIED'; win32Error = $errorCode } }
+  [void][P.F]::CloseHandle($h)
+  return @{ result = 'OK'; win32Error = 0 }
+}
+function DirectoryFacts([string]$name, [string]$path) {
+  $facts = @{ name = $name; path = $path; genericAll = (OpenResult $path 0x10000000); deleteChild = (OpenResult $path 0x40) }
+  try {
+    $acl = Get-Acl -LiteralPath $path -ErrorAction Stop
+    $rules = @($acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]))
+    $facts.protected = $acl.AreAccessRulesProtected
+    $facts.owner = $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value
+    $facts.sddlLength = $acl.Sddl.Length
+    $facts.sddl = $acl.Sddl.Substring(0, [Math]::Min(4096, $acl.Sddl.Length))
+    $facts.ruleCount = $rules.Count
+    $facts.rules = @($rules | Select-Object -First 16 | ForEach-Object {
+      @{ sid = $_.IdentityReference.Value; type = $_.AccessControlType.ToString(); rights = [int]$_.FileSystemRights
+         inherited = $_.IsInherited; inheritance = $_.InheritanceFlags.ToString(); propagation = $_.PropagationFlags.ToString() }
+    })
+  } catch { $facts.aclError = $_.Exception.GetType().FullName }
+  return $facts
+}
+$file = OpenResult '${join(granted, 'file.txt')}' 0x10000000
+$nested = OpenResult '${join(child, 'deep.txt')}' 0x10000000
+$directory = OpenResult '${child}' 0x10000000
+'FILE: ' + $file.result
+'NESTED-FILE: ' + $nested.result
+'DIRECTORY: ' + $directory.result
+'DIRECTORY-ERROR: ' + $directory.win32Error
+if ($file.result -ne 'OK' -or $nested.result -ne 'OK' -or $directory.win32Error -ne 5) {
+  # Read the original host token without adjusting privileges or changing the assertion.
+  $privileges = @{}
+  foreach ($name in @('SeBackupPrivilege', 'SeRestorePrivilege')) {
+    try { $privileges[$name] = [P.F]::PrivilegeAttributes($name) }
+    catch { $privileges[$name] = $_.Exception.GetType().FullName }
+  }
+  'ACL-DIAGNOSTIC ' + (@{
+    file = $file; nestedFile = $nested; directory = $directory
+    callerSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    privileges = $privileges
+    directories = @(
+      (DirectoryFacts 'root' '${granted}')
+      (DirectoryFacts 'child-before-grant' '${child}')
+      (DirectoryFacts 'child-after-grant' '${afterGrant}')
+    )
+  } | ConvertTo-Json -Depth 8 -Compress)
+}
 `
       const result = spawnSync('pwsh', ['-NoLogo', '-NonInteractive', '-NoProfile', '-Command', probe], { encoding: 'utf8', timeout: 60_000 })
-      expect(result.status, `stderr: ${result.stderr}`).toBe(0)
-      expect(result.stdout).toContain('FILE: OK')
-      expect(result.stdout).toContain('NESTED-FILE: OK')
-      expect(result.stdout).toContain('DIRECTORY: DENIED')
+      const details = `stdout: ${result.stdout}\nstderr: ${result.stderr}`
+      expect(result.error, details).toBeUndefined()
+      expect(result.signal, details).toBeNull()
+      expect(result.status, details).toBe(0)
+      expect(result.stdout, details).toContain('FILE: OK')
+      expect(result.stdout, details).toContain('NESTED-FILE: OK')
+      expect(result.stdout, details).toContain('DIRECTORY: DENIED')
+      expect(result.stdout, details).toContain('DIRECTORY-ERROR: 5')
     } finally {
       grant.dispose()
       rmSync(granted, { recursive: true, force: true })

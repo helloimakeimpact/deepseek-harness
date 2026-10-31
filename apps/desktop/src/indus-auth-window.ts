@@ -61,7 +61,7 @@ function encryptedStore(clientId: string): IndusTokenStore {
  * Require the owned account before any Harness Host or provider adapter starts.
  * Missing configuration remains in this isolated window without an upstream fallback.
  */
-export async function requireIndusIdentity(onLost: () => Promise<void>): Promise<IndusAuth> {
+export async function requireIndusIdentity(lifecycle: { stop: () => Promise<void>; lost: () => Promise<void> }): Promise<IndusAuth> {
   const config = indusAuthConfig({
     DSH_CLIENT_INDUS_OAUTH_CLIENT_ID: process.env.DSH_CLIENT_INDUS_OAUTH_CLIENT_ID,
     DSH_CLIENT_INDUS_OAUTH_CALLBACK_PORT: process.env.DSH_CLIENT_INDUS_OAUTH_CALLBACK_PORT,
@@ -73,7 +73,8 @@ export async function requireIndusIdentity(onLost: () => Promise<void>): Promise
     config,
     store: encryptedStore(config?.clientId ?? 'unconfigured'),
     open: url => shell.openExternal(url),
-    lost: onLost,
+    lost: lifecycle.lost,
+    stop: lifecycle.stop,
     notify: (state) => {
       window?.webContents.send('indus-identity:state', state)
       if (state === 'signed-in') finish?.()
