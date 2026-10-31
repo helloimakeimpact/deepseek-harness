@@ -187,8 +187,8 @@
       }
     },
     "browserExecutionDecision": "Owner requires Observe, Plan, Build and Run together. Permission enforcement, owned Host bridge and execution acceptance remain incomplete; inspection pairing is not execution authority.",
-    "remoteAcceptance": "CI run 41128540101 failed on the d5b05445 candidate; follow-up source changes require new exact-head CI.",
-    "windowsAclQualification": "Windows coverage run 41128540101 failed two cross-root/directory ACL cases and one diagnostic-fixture case. A pre-existing child had explicit ambient full-control ACEs ordered before an inherited delete-child denial; a post-grant child was denied. Restricted-child cross-root deletion also failed its denial assertion. Cause and safe remediation remain under investigation; Windows isolation is not qualified and no production ACL change is claimed.",
+    "remoteAcceptance": "CI run 41192146327 failed on static documentation references and Windows ACL cases; follow-up source changes require new exact-head CI.",
+    "windowsAclQualification": "Windows coverage run 41192146327 reproduced cross-workspace deletion inside pre-existing directories; analogous post-grant directories denied deletion. Existing child DACLs may place explicit ambient full-control entries before an inherited delete-child denial. Safe remediation and Windows acceptance remain incomplete; no production ACL change is claimed. A separate diagnostic test compared icacls path-prefixed and unprefixed lines; the local correction compares the existing normalized ACL entries without weakening preservation.",
     "typeAggregates": {
       "passed": 2,
       "failed": 0,
@@ -205,21 +205,23 @@
       "failed": 0
     },
     "latestCiDiagnostics": {
-      "runId": 41128540101,
+      "runId": 41192146327,
       "state": "failed",
-      "linuxCoverage": "One repository policy workflow assertion was stale after the earlier fork-specific preflight change; targeted workflow checks corrected locally.",
-      "windowsCoverage": "Four tests failed: the same workflow assertion and three Windows ACL-related cases.",
-      "browserSnapshots": "One requested-SVG browser case reported a WebSocket disconnection; other 740 cases passed and 15 were skipped. All three SVG journey cases pass locally without retry; the remote failure root cause is not established.",
-      "static": "A newly introduced unknown cast violated the no-new-casts rule; removed locally.",
-      "catalog": "Windows observational checks found stale generated Cordis references; regenerated locally.",
+      "linuxCoverage": "passed",
+      "browserSnapshots": "passed",
+      "windowsCoverage": "failed: cross-root deletion, directory access and diagnostic fixture",
+      "static": "failed: repository-reference rule rejected a commit identifier in this release record; corrected locally",
       "passingLanes": [
+        "Linux coverage",
+        "browser snapshots and artifacts",
         "Node 22.19",
         "Node 24.9",
         "Node 26",
         "Windows native tests (not the Windows ACL suite)",
         "Python SDK and release matrix",
         "benchmarks"
-      ]
+      ],
+      "followUp": "The Windows ACL runner and diagnostic suites are added to the required Windows native CI lane. The cross-root and directory assertions remain unchanged and will block the required verdict until resolved."
     }
   },
   "publishedPreview": {
