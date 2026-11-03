@@ -18,6 +18,23 @@ vi.mock('node:fs/promises', async importOriginal => ({
 }))
 
 describe('installer preparation preserves application dependencies', () => {
+  it.each(['official', 'indus-orbit'] as const)('selects the Windows setup artwork for %s', async (profile) => {
+    execute.mockClear()
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig({
+      DSH_BUILD_CLIENT_PROFILE: profile,
+      DSH_DESKTOP_TARGET_PLATFORM: 'win32', DSH_DESKTOP_TARGET_ARCH: 'x64', DSH_DESKTOP_UNSIGNED: '1',
+      DSH_DESKTOP_APP_ID: 'com.example.installer',
+      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
+      DSH_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
+    }, 'win32', 'x64')
+    await config.beforeBuild()
+    expect(execute).toHaveBeenCalledTimes(1)
+    if (profile === 'indus-orbit') expect(execute).toHaveBeenCalledWith('powershell.exe',
+      expect.arrayContaining(['-BrandImage', expect.stringContaining('io-harness-mark.png')]), expect.anything())
+    else expect(execute).not.toHaveBeenCalledWith('powershell.exe', expect.arrayContaining(['-BrandImage']), expect.anything())
+  })
+
   it.each(['win32', 'darwin'] as const)('rejects a missing production policy before signing on %s', async (platform) => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     expect(() => createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.example.installer',
@@ -102,7 +119,17 @@ describe('installer preparation preserves application dependencies', () => {
     expect(config.artifactName).toBe('deepseek-harness-${version}-${os}-${arch}-unsigned.${ext}')
   })
 
-  it('packages every preload entry point the shell loads', async () => {
+  it.each(['official', 'indus-orbit'] as const)('retains all upstream Mac locales with the %s product identity', async (profile) => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig({ DSH_BUILD_CLIENT_PROFILE: profile, DSH_DESKTOP_UNSIGNED: '1',
+      DSH_DESKTOP_TARGET_PLATFORM: 'darwin', DSH_DESKTOP_TARGET_ARCH: 'arm64', DSH_DESKTOP_APP_ID: 'com.example.installer' }, 'darwin', 'arm64')
+    const expectedName = profile === 'indus-orbit' ? 'I/O Harness' : 'DeepSeek Harness'
+    expect(config.mac.extendInfo.CFBundleLocalizations).toEqual(['en', 'zh_CN', 'ja', 'es', 'fr', 'de', 'ru', 'pt'])
+    expect(config.mac.extendInfo.CFBundleDisplayName).toBe(expectedName)
+    expect(config.mac.extendInfo.NSMicrophoneUsageDescription).toContain(expectedName)
+  })
+
+  it.each([['official', 'darwin', 'arm64'], ['indus-orbit', 'darwin', 'arm64'], ['indus-orbit', 'darwin', 'x64'], ['indus-orbit', 'win32', 'x64']] as const)('packages every preload entry point for %s on %s/%s', async (profile, platform, arch) => {
     const { readdirSync, readFileSync } = await import('node:fs')
     const sourceDirectory = new URL('../src/', import.meta.url)
     const referenced = new Set<string>()
@@ -113,6 +140,10 @@ describe('installer preparation preserves application dependencies', () => {
     expect(referenced.size).toBeGreaterThan(0)
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     const config = createElectronBuilderConfig({
+      DSH_BUILD_CLIENT_PROFILE: profile,
+      DSH_DESKTOP_TARGET_PLATFORM: platform,
+      DSH_DESKTOP_TARGET_ARCH: arch,
+      DSH_DESKTOP_UNSIGNED: profile === 'indus-orbit' ? '1' : '0',
       DSH_DESKTOP_APP_ID: 'com.example.installer',
       DSH_DESKTOP_AUTO_UPDATE_ENV: 'production',
       DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://harness-test.deepseek.com',
@@ -120,7 +151,7 @@ describe('installer preparation preserves application dependencies', () => {
       DSH_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)',
       DSH_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234',
       APPLE_KEYCHAIN_PROFILE: 'installer-test',
-    }, 'darwin', 'arm64')
+    }, platform, arch)
     const packaged = new Set(config.files.filter((entry): entry is string => typeof entry === 'string'))
     for (const name of referenced) expect(packaged.has(`lib/${name}`)).toBe(true)
   })

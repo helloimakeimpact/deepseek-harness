@@ -256,8 +256,11 @@ export class WorkerModuleLoader {
       }
       return undefined
     }
-    for (const [key, value] of Object.entries(field as { [key: string]: ExportsField })) {
-      if (!this.conditions.has(key)) continue
+    const branches = field as { readonly [key: string]: ExportsField }
+    for (const key of this.conditions) {
+      if (!Object.hasOwn(branches, key)) continue
+      const value = branches[key]
+      if (value === undefined) continue
       const picked = this.selectCondition(value, packageName, subpath)
       if (picked !== undefined) return picked
     }

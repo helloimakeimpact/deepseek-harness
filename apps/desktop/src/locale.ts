@@ -73,6 +73,8 @@ export const en = {
   disableThirdPartyPlugins: 'Disable third-party plugins, back up profile patch, and restart',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Welcome to ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -115,6 +117,7 @@ export const en = {
   updateInstallNetworkFailed: 'Could not install the update. Check your connection and try again.',
   unknownError: 'Unknown error',
   updateCheckTitle: 'Check for Updates',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Current version: {version}',
   updateCurrent: 'You’re up to date!',
   updateChecking: 'Checking for updates…',
@@ -253,6 +256,8 @@ export const zh = {
   disableThirdPartyPlugins: '禁用第三方插件、备份 profile patch 并重启',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: '欢迎使用 ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -295,6 +300,7 @@ export const zh = {
   updateInstallNetworkFailed: '安装更新失败，请检查网络连接后重试。',
   unknownError: '未知错误',
   updateCheckTitle: '检查更新',
+  updateUnavailable: '此 I/O Harness 预览版暂不提供自动更新。Indus Orbit 发布版本后，请使用经过验证的发行版本。',
   updateCurrentDetail: '当前版本：{version}',
   updateCurrent: '已是最新版本',
   updateChecking: '正在检查更新…',
@@ -431,6 +437,8 @@ export const ja = {
   disableThirdPartyPlugins: 'サードパーティのプラグインを無効化し、プロファイルパッチをバックアップして再起動',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'ようこそ ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -473,6 +481,7 @@ export const ja = {
   updateInstallNetworkFailed: 'アップデートをインストールできませんでした。接続を確認してもう一度お試しください。',
   unknownError: '不明なエラー',
   updateCheckTitle: 'アップデートを確認',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: '現在のバージョン: {version}',
   updateCurrent: '最新です！',
   updateChecking: 'アップデートを確認中…',
@@ -609,6 +618,8 @@ export const es = {
   disableThirdPartyPlugins: 'Deshabilite los complementos de terceros, haga una copia de seguridad del parche del perfil y reinicie',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Bienvenido a ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -651,6 +662,7 @@ export const es = {
   updateInstallNetworkFailed: 'No se pudo instalar la actualización. Comprueba tu conexión y vuelve a intentarlo.',
   unknownError: 'Error desconocido',
   updateCheckTitle: 'Buscar actualizaciones',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Versión actual: {version}',
   updateCurrent: '¡Estás al día!',
   updateChecking: 'Buscando actualizaciones...',
@@ -787,6 +799,8 @@ export const fr = {
   disableThirdPartyPlugins: 'Désactivez les plugins tiers, sauvegardez le correctif de profil et redémarrez',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Bienvenue à ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -829,6 +843,7 @@ export const fr = {
   updateInstallNetworkFailed: "Impossible d'installer la mise à jour. Vérifiez votre connexion et réessayez.",
   unknownError: 'Erreur inconnue',
   updateCheckTitle: 'Vérifier les mises à jour',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Version actuelle : {version}',
   updateCurrent: 'Vous êtes à jour !',
   updateChecking: 'Vérification des mises à jour…',
@@ -965,6 +980,8 @@ export const de = {
   disableThirdPartyPlugins: 'Deaktivieren Sie Plugins von Drittanbietern, sichern Sie den Profil-Patch und starten Sie neu',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Willkommen bei ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -1007,6 +1024,7 @@ export const de = {
   updateInstallNetworkFailed: 'Das Update konnte nicht installiert werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.',
   unknownError: 'Unbekannter Fehler',
   updateCheckTitle: 'Nach Updates suchen',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Aktuelle Version: {version}',
   updateCurrent: 'Sie verwenden die neueste Version.',
   updateChecking: 'Suche nach Updates…',
@@ -1143,6 +1161,8 @@ export const ru = {
   disableThirdPartyPlugins: 'Отключите сторонние плагины, создайте резервную копию патча профиля и перезапустите.',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Добро пожаловать в ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -1185,6 +1205,7 @@ export const ru = {
   updateInstallNetworkFailed: 'Не удалось установить обновление. Проверьте подключение и повторите попытку.',
   unknownError: 'Неизвестная ошибка',
   updateCheckTitle: 'Проверьте наличие обновлений',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Текущая версия: {version}.',
   updateCurrent: 'У вас последняя версия.',
   updateChecking: 'Проверка обновлений…',
@@ -1321,6 +1342,8 @@ export const pt = {
   disableThirdPartyPlugins: 'Desative plug-ins de terceiros, faça backup do patch do perfil e reinicie',
   welcomeTitle: 'DeepSeek Harness',
   welcomeBrand: 'DeepSeek Harness',
+  welcomeWorkstation: 'Workstation',
+  welcomeFoundation: 'Indus Orbit · The General Intelligence Foundation of India',
   welcomeTaglineBefore: 'Bem-vindo ao ',
   welcomeTaglineBrand: 'DeepSeek Harness',
   welcomeTaglineAfter: '',
@@ -1363,6 +1386,7 @@ export const pt = {
   updateInstallNetworkFailed: 'Não foi possível instalar a atualização. Verifique sua conexão e tente novamente.',
   unknownError: 'Erro desconhecido',
   updateCheckTitle: 'Verifique se há atualizações',
+  updateUnavailable: 'Automatic updates are unavailable for this I/O Harness preview. Use a verified Indus Orbit release when one is published.',
   updateCurrentDetail: 'Versão atual: {version}',
   updateCurrent: 'Você está atualizado!',
   updateChecking: 'Verificando atualizações…',
@@ -1436,11 +1460,28 @@ export interface DesktopLocale {
 /** Resolve Electron's locale to one shipped Desktop dictionary. */
 export function resolveDesktopLocale(locale: string): DesktopLocale {
   const primary = locale.toLowerCase().split('-')[0]
-  if (primary !== undefined && Object.hasOwn(dictionaries, primary)) {
-    const id = primary as keyof typeof dictionaries
-    return { id: id === 'zh' ? 'zh-CN' : id, messages: dictionaries[id] }
-  }
-  return { id: 'en', messages: en }
+  const id = primary !== undefined && Object.hasOwn(dictionaries, primary)
+    ? primary as keyof typeof dictionaries
+    : 'en'
+  const resolved: DesktopLocale = { id: id === 'zh' ? 'zh-CN' : id, messages: dictionaries[id] }
+  if (process.env.DSH_CLIENT_BUILD_PROFILE !== 'indus-orbit') return resolved
+  const chinese = resolved.id === 'zh-CN'
+  return { ...resolved, messages: {
+    ...resolved.messages,
+    aboutMenu: chinese ? '关于 I/O Harness' : 'About I/O Harness',
+    aboutProduct: 'I/O Harness',
+    hideApplication: chinese ? '隐藏 I/O Harness' : 'Hide I/O Harness',
+    quitApplication: chinese ? '退出 I/O Harness' : 'Quit I/O Harness',
+    openApplication: chinese ? '打开 I/O Harness' : 'Open I/O Harness',
+    quitTitle: chinese ? '退出 I/O Harness？' : 'Quit I/O Harness?',
+    startupFailed: chinese ? 'I/O Harness 无法使用' : 'I/O Harness is unavailable',
+    welcomeTitle: 'I/O Harness — Indus Orbit', welcomeBrand: 'I/O Harness', welcomeTaglineBrand: 'I/O Harness',
+    welcomeWorkstation: 'Harness',
+    welcomeDescription: 'Intelligence, built together.',
+    welcomeSignIn: chinese ? '使用 Indus Orbit 账户登录' : 'Sign in with Indus Orbit',
+    welcomeKeyDescription: chinese ? '使用 Indus Orbit 账号打开 I/O H。模型访问正在集成中。' : 'Open I/O H with your Indus Orbit account. Model access is being integrated.',
+    updateTitle: chinese ? 'I/O Harness 更新' : 'I/O Harness Update',
+  } }
 }
 
 /**

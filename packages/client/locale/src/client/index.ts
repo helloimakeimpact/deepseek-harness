@@ -21,6 +21,7 @@ import {
   type BuiltInLocaleId, type LocaleId, type LocaleSettings,
 } from '../locale-settings.ts'
 import { en, ja, es, fr, de, ru, pt, zh, type CommonKey } from '../locales/index.ts'
+import { hi } from '../locales/hi.ts'
 import {
   en as settingsEn, ja as settingsJa, es as settingsEs, fr as settingsFr,
   de as settingsDe, ru as settingsRu, pt as settingsPt, zh as settingsZh, type SettingsLocaleKey,
@@ -582,6 +583,11 @@ export async function apply(ctx: ClientContext): Promise<void> {
   const locale = new LocaleRuntime(ctx, host, bootstrap)
   for (const [id, label] of [['ja', '日本語'], ['es', 'Español'], ['fr', 'Français'], ['de', 'Deutsch'], ['ru', 'Русский'], ['pt', 'Português']] as const) {
     ctx.effect(() => locale.addLanguage({ id, label, fallback: 'en' }), `locale: ${id} language`)
+  }
+  if (process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit') {
+    ctx.effect(() => locale.addLanguage({ id: 'hi', label: 'हिन्दी', fallback: 'en' }), 'locale: Hindi language')
+    ctx.effect(() => locale.register(COMMON_NS, 'hi', hi), 'locale: Hindi common dictionary')
+    ctx.effect(() => locale.register(SETTINGS_NS, 'hi', { 'language.title': 'भाषा' }), 'locale: Hindi settings dictionary')
   }
   ctx.effect(() => locale.register(COMMON_NS, { zh, en, ja, es, fr, de, ru, pt }), 'locale: common dictionaries')
   ctx.effect(() => locale.register(SETTINGS_NS, { zh: settingsZh, en: settingsEn, ja: settingsJa, es: settingsEs, fr: settingsFr, de: settingsDe, ru: settingsRu, pt: settingsPt }), 'locale: settings dictionaries')

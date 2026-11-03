@@ -159,6 +159,7 @@ Hot reload service with Cordis-compatible module configuration and events.
 
 ```ts cordis-catalog
 /** Serialize a caller-owned mutation with all automatic reload paths.
+ * Captured asynchronous context loses transaction authority when this operation settles.
  * @param operation Work that must not overlap module or configuration replacement.
  * @returns The operation result after its asynchronous work completes.
  */
@@ -445,7 +446,7 @@ Source: [`packages/client/ui-plugin-manager/src/index.ts`](../../packages/client
 
 ### `ctx.profileContext` — `ProfileContext`
 
-Current profile facts; scheduling and mutation belong to their callers.
+Current profile facts; scheduling and mutation belong to their callers. Application default patches remain below editable profile/home patches across startup and live reload.
 
 Source: [`packages/boot/app-boot/src/profile-context.ts`](../../packages/boot/app-boot/src/profile-context.ts)
 

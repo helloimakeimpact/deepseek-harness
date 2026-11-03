@@ -1,0 +1,13 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 240 240"
+  shape-rendering="crispEdges"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">Woven portal — Indus Orbit motif study</title>
+  <path fill="#F9D8BE" d="M64 40h112v160H64z" />
+  <path fill="none" stroke="#20234E" stroke-width="4" d="M60 204V48h12V36h96v12h12v156" />
+  <path fill="none" stroke="#316B53" stroke-width="8" d="M20 120h72v-16h112" />
+  <path fill="none" stroke="#EFAD45" stroke-width="8" d="M20 148h88v-16h96" />
+</svg>

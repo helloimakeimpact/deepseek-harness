@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Indus Orbit Workstation identity > shows the approved identity and a static loaded mark on desktop and a narrow phone > hero-copy 1`] = `"- text: Intelligence, built together. Preview"`;

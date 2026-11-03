@@ -32,6 +32,29 @@ function isMaintained(file: string): boolean {
   return !excludedPrefixes.some(prefix => file.startsWith(prefix))
 }
 
+/** Exact source revisions are data in these fork verification records, not prose references. */
+function recordedSourceCommit(file: string, source: string): { key: string; value: string } | undefined {
+  const receipt = file === 'docs/indus-orbit-local-verification-2026-10-22.json'
+    || file === 'docs/indus-orbit-workstation-verification-2026-10-27.json'
+  const parentReceipt = file === 'docs/indus-orbit-security-verification-2026-10-29.json'
+    || file === 'docs/indus-orbit-runtime-qualification-2026-10-29.json'
+  const proposal = file === 'docs/indus-orbit-terminal-distribution.proposal.json'
+  if (!receipt && !parentReceipt && !proposal) return undefined
+  let document: unknown
+  try { document = JSON.parse(source) }
+  catch (_invalidEvidence) {
+    // Invalid JSON cannot declare a source-revision field.
+    return undefined
+  }
+  if (typeof document !== 'object' || document === null) return undefined
+  const upstream = 'upstream' in document ? document.upstream : undefined
+  const value = receipt && 'sourceBase' in document ? document.sourceBase
+    : parentReceipt && 'sourceParent' in document ? document.sourceParent
+      : proposal && typeof upstream === 'object' && upstream !== null && 'commit' in upstream ? upstream.commit : undefined
+  return typeof value === 'string' && /^[a-f0-9]{40}$/u.test(value)
+    ? { key: receipt ? 'sourceBase' : parentReceipt ? 'sourceParent' : 'commit', value } : undefined
+}
+
 /**
  * Inspect a maintained source file against known commit identifiers.
  * @param file - Repository-relative path used in diagnostics and exclusions.
@@ -46,12 +69,18 @@ export function findRepositoryReferences(
   commits: ReadonlySet<string>,
 ): RepositoryReference[] {
   if (!isMaintained(file)) return []
+  const recorded = recordedSourceCommit(file, source)
   const references: RepositoryReference[] = []
-  for (const [index, line] of source.split('\n').entries()) {
+  const lines = source.split('\n')
+  const recordedLines = recorded === undefined ? [] : lines.flatMap((line, index) =>
+    line.trim().replace(/,$/u, '') === `"${recorded.key}": "${recorded.value}"` ? [index] : [])
+  // A repeated evidence property is ambiguous; scan every occurrence instead of exempting either.
+  const recordedLine = recordedLines.length === 1 ? recordedLines[0] : undefined
+  for (const [index, line] of lines.entries()) {
     if (organizationUrl.test(canonicalReferenceText(line).replace(kitRepositoryUrl, ''))) {
       references.push({ file, line: index + 1, kind: 'organization-url' })
     }
-    if ([...line.matchAll(commitCandidate)].some(match => commits.has(match[0].toLowerCase()))) {
+    if (index !== recordedLine && [...line.matchAll(commitCandidate)].some(match => commits.has(match[0].toLowerCase()))) {
       references.push({ file, line: index + 1, kind: 'commit-hash' })
     }
   }

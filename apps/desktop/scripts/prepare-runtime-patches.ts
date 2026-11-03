@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import yaml from 'js-yaml'
 import { valid } from 'semver'
+import { assertReviewedRuntimeDependency } from './runtime-dependency-inventory.ts'
 import { DESKTOP_RUNTIME_DEPENDENCY_OVERRIDES, DESKTOP_RUNTIME_PATCHES, type DesktopRuntimePatch } from './runtime-patch-policy.ts'
 
 /** Expected patch bytes and package version for one independent installation. */
@@ -100,6 +101,10 @@ export function verifyRuntimePatches(projectRoot: string, plan: PreparedRuntimeP
   const lock = yaml.load(readFileSync(join(projectRoot, 'pnpm-lock.yaml'), 'utf8')) as {
     patchedDependencies?: Record<string, string>
     packages?: Record<string, { version?: string }>
+  }
+  for (const [spec, entry] of Object.entries(lock.packages ?? {})) {
+    const separator = spec.lastIndexOf('@')
+    assertReviewedRuntimeDependency(spec.slice(0, separator), entry.version ?? spec.slice(separator + 1).split('(')[0]!)
   }
   for (const patch of plan.patches) {
     if (!Object.keys(lock.packages ?? {}).some(spec => spec.startsWith(`${patch.name}@`))) {

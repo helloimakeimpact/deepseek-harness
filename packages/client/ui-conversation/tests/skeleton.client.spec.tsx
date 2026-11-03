@@ -20,7 +20,7 @@ import { EMPTY_CONVERSATION_SNAPSHOT } from '../src/client/contract/snapshot.ts'
 import type { ConversationSnapshot } from '../src/client/contract/snapshot.ts'
 import { createConversationStore } from '../src/client/stores.ts'
 import { SessionInputShell } from '../src/client/input/facade.ts'
-import { en, zh } from '../src/client/locales.ts'
+import { de, en, es, fr, ja, pt, ru, zh } from '../src/client/locales.ts'
 import { ConversationContent } from '../src/client/skeleton/ConversationContent.tsx'
 import { ConversationHeader } from '../src/client/skeleton/ConversationHeader.tsx'
 import { ConversationMainPanel } from '../src/client/skeleton/ConversationMainPanel.tsx'
@@ -87,6 +87,7 @@ function fireResize(el: Element): void {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
   vi.unstubAllGlobals()
   resizeObservers.length = 0
 })
@@ -411,6 +412,23 @@ function mount(
 }
 
 describe('Hero chrome', () => {
+  it('retains the approved Indus headline in every supported interface locale', () => {
+    for (const locale of [zh, en, ja, es, fr, de, ru, pt]) {
+      expect(locale['hero.indusOrbitHeadline']).toBe('Intelligence, built together.')
+    }
+  })
+
+  it('keeps the approved Indus line and truthful preview badge in both interface locales', () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
+    const renderSlot = vi.fn<HeroShellProps['renderSlot']>(() => null)
+    const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)
+    expect(view.getByText('Intelligence, built together.')).toBeTruthy()
+    expect(view.getByText('Preview')).toBeTruthy()
+    view.rerender(<HeroShell t={makeTranslate(zh, commonZh)} renderSlot={renderSlot} />)
+    expect(view.getByText('Intelligence, built together.')).toBeTruthy()
+    expect(view.getByText(zh['hero.preview'])).toBeTruthy()
+  })
+
   it('renders the English preview badge through the hero locale seat', () => {
     const renderSlot = vi.fn<HeroShellProps['renderSlot']>(() => null)
     const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)

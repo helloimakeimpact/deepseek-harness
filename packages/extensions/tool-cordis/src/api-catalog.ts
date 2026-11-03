@@ -1731,7 +1731,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: 'runExclusive<T>(operation: () => Promise<T>): Promise<T>',
-        description: 'Serialize a caller-owned mutation with all automatic reload paths.',
+        description: 'Serialize a caller-owned mutation with all automatic reload paths. Captured asynchronous context loses transaction authority when this operation settles.',
         parameters: [{ name: 'operation', description: 'Work that must not overlap module or configuration replacement.' }],
         returns: 'The operation result after its asynchronous work completes.',
       },
@@ -2427,7 +2427,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
   {
     key: 'profileContext',
     summary: 'Current profile facts; scheduling and mutation belong to their callers.',
-    description: 'Current profile facts; scheduling and mutation belong to their callers.',
+    description: 'Current profile facts; scheduling and mutation belong to their callers. Application default patches remain below editable profile/home patches across startup and live reload.',
     methods: [
       {
         signature: 'readonly packageManager?: ProfilePnpmInvocation',
@@ -2437,6 +2437,11 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       {
         signature: 'readonly startedBundles: readonly string[]',
         description: 'Bundle packages used to start this process, before any persisted edits.',
+        parameters: [],
+      },
+      {
+        signature: 'readonly defaultPatches?: readonly PatchOptions[]',
+        description: 'Application defaults after bundle patches and before editable profile/home patches; retained across reloads.',
         parameters: [],
       },
       {

@@ -230,6 +230,29 @@ it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('selects branding from the
   }
 })
 
+it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('keeps I/O H identity and its preview-only package record on %s', async (target) => {
+  const { run, stages } = supervisor()
+  const platform = target === 'win-x64' ? 'win32' : 'darwin'
+  const fork = { ...environment, DSH_BUILD_CLIENT_PROFILE: 'indus-orbit', DSH_CLIENT_BUILD_PROFILE: 'indus-orbit' }
+  await packageTarget(parseDesktopPackageInvocation([target, '--unsigned'], platform, platform === 'win32' ? 'x64' : 'arm64'), fork, run)
+  expect(stages[0]).toBe('run build --profile indus-orbit')
+  expect(stages.some(stage => stage.startsWith('run release:pack --family dsh --client-profile indus-orbit '))).toBe(true)
+  expect(stages.some(stage => stage.startsWith('exec tsx apps/desktop/scripts/pack-local-packages.ts'))).toBe(false)
+  for (const call of run.run.mock.calls.filter(([stage]) => stage === 'run build --profile indus-orbit' || stage.startsWith('run release:pack --family dsh '))) {
+    expect(call[3].env.DSH_BUILD_CLIENT_PROFILE).toBe('indus-orbit')
+    expect(call[3].env.DSH_CLIENT_BUILD_PROFILE).toBe('indus-orbit')
+  }
+  expect(stages).not.toContain('preflight:windows-signing')
+  expect(writeFileSync).not.toHaveBeenCalled()
+})
+
+it('rejects signed I/O H builds before invoking any packaging stage', async () => {
+  const { run, stages } = supervisor()
+  await expect(packageTarget(parseDesktopPackageInvocation(['win-x64'], 'win32', 'x64'),
+    { ...environment, DSH_BUILD_CLIENT_PROFILE: 'indus-orbit' }, run)).rejects.toThrow(/unsigned local previews only/)
+  expect(stages).toEqual([])
+})
+
 it.each([
   ['mac-arm64', 'run build --profile local'],
   ['win-x64', 'run build --profile local'],

@@ -13,6 +13,12 @@ import { capture } from './process.ts'
 /** Name of the file recording the order in which a packed family uploads. */
 export const PUBLISH_ORDER_FILE = 'publish-order.txt'
 
+/** Local preview packs cannot supply an npm publication order. */
+export const LOCAL_PACK_ORDER_FILE = 'local-pack-order.txt'
+
+/** Presence blocks publication even if a publication order is added later. */
+export const LOCAL_PREVIEW_MARKER_FILE = 'local-preview.json'
+
 /** What a packed tarball calls itself. */
 export interface PackedIdentity {
   /** Package name from the packed manifest. */

@@ -1,6 +1,8 @@
 import { SHIPPED_LOCALE_IDS } from '../../../scripts/shipped-locales.ts'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { en, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale, ja, zh, es, fr, de, ru, pt } from '../src/locale.ts'
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe('desktop locale dictionaries', () => {
   it('ships baseline and Japanese keys and falls back for unsupported languages', () => {
@@ -29,6 +31,18 @@ describe('desktop locale dictionaries', () => {
   it.each(SHIPPED_LOCALE_IDS)('resolves every shipped language %s without fallback', (id) => {
     expect(resolveDesktopLocale(id).id).toBe(id === 'zh' ? 'zh-CN' : id)
     expect(resolveDesktopStartupLocale(null, [id]).id).toBe(id === 'zh' ? 'zh-CN' : id)
+  })
+
+  it.each(SHIPPED_LOCALE_IDS)('preserves language %s with the I/O Harness identity', (id) => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
+    const locale = resolveDesktopLocale(id)
+    expect(locale.id).toBe(id === 'zh' ? 'zh-CN' : id)
+    expect(locale.messages.aboutProduct).toBe('I/O Harness')
+    expect(locale.messages.welcomeBrand).toBe('I/O Harness')
+    expect(locale.messages.welcomeWorkstation).toBe('Harness')
+    expect(locale.messages.welcomeFoundation).toBe('Indus Orbit · The General Intelligence Foundation of India')
+    expect(locale.messages.welcomeSignIn).toContain('Indus Orbit')
+    expect(locale.messages.welcomeKeyDescription).toContain('Indus Orbit')
   })
 
   it('formats named values without consuming unknown placeholders', () => {
