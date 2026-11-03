@@ -23,7 +23,7 @@ describe('upstream and I/O H packaging profiles', () => {
   })
 
   it('continues to block signed builds and upstream update publication for I/O H', () => {
-    expect(() => assertDesktopProfilePackaging(fork, false)).toThrow(/unsigned local previews only/)
-    expect(() => assertDesktopProfileUpdates(fork)).toThrow(/no approved update or upload/)
+    expect(() => { assertDesktopProfilePackaging(fork, false) }).toThrow(/unsigned local previews only/)
+    expect(() => { assertDesktopProfileUpdates(fork) }).toThrow(/no approved update or upload/)
   })
 })

@@ -98,7 +98,7 @@ try {
   host = new DesktopHostProcess(process.execPath, runtime, profile, undefined, environment, undefined,
     resolve(values.runtime),
     { pnpm: join(source, 'apps/desktop/node_modules/pnpm/bin/pnpm.mjs'), nodeBin: dirname(process.execPath) },
-    undefined, () => broker.start())
+    undefined, undefined, () => broker.start())
   await host.start()
   await host.updateTasks('inspect')
   const received = await result
