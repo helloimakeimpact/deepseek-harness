@@ -2,6 +2,8 @@ import type { CommonKey } from './zh.ts'
 
 /** Hindi core vocabulary for the Indus Orbit interface. */
 export const hi = {
+  'subtitle.expand': 'विवरण दिखाएँ',
+  'subtitle.collapse': 'विवरण छिपाएँ',
   'ok': 'ठीक है',
   'cancel': 'रद्द करें',
   'close': 'बंद करें',
