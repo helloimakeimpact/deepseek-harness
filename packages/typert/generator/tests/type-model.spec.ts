@@ -1714,20 +1714,25 @@ describe('FaceModelEmitter', { timeout: 60_000 }, () => {
       '}',
       '',
     ].join('\n'))
-    const program = ts.createProgram({
-      rootNames: [consumerPath, declarationPath, sourceStubPath],
-      options: {
-        strict: true,
-        noEmit: true,
-        skipLibCheck: false,
-        target: ts.ScriptTarget.ES2024,
-        lib: ['lib.es2024.d.ts'],
-        types: [],
-        module: ts.ModuleKind.ESNext,
-        moduleResolution: ts.ModuleResolutionKind.Bundler,
-      },
-    })
-    const diagnostics = ts.getPreEmitDiagnostics(program)
-    expect(diagnostics.map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'))).toEqual([])
+    // Current Zod declarations use the URL type supplied by the consumer's Host or Client environment.
+    for (const environment of [
+      { lib: ['lib.es2024.d.ts'], types: ['node'] },
+      { lib: ['lib.es2024.d.ts', 'lib.dom.d.ts'], types: [] },
+    ]) {
+      const program = ts.createProgram({
+        rootNames: [consumerPath, declarationPath, sourceStubPath],
+        options: {
+          strict: true,
+          noEmit: true,
+          skipLibCheck: false,
+          target: ts.ScriptTarget.ES2024,
+          ...environment,
+          module: ts.ModuleKind.ESNext,
+          moduleResolution: ts.ModuleResolutionKind.Bundler,
+        },
+      })
+      const diagnostics = ts.getPreEmitDiagnostics(program)
+      expect(diagnostics.map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'))).toEqual([])
+    }
   })
 })

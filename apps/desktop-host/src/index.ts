@@ -1,5 +1,6 @@
 /** Launch the Desktop profile through the Web application and report its URL to Electron. */
 
+import { fileURLToPath } from 'node:url'
 import { delimiter, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { PluginOperationRunId } from '@deepseek-ai/dsh-plugin-manager/diagnostic'
@@ -18,6 +19,7 @@ import { installDesktopQuitInspection } from './quit-inspection.ts'
 import { installPlatformSessionPublisher } from './platform-session.ts'
 import { installOfficeEngineResolution } from './office-engine.ts'
 import { installOperationDiagnostics } from './operation-diagnostics.ts'
+export { name, inject, apply } from './indus-model-entry.ts'
 
 async function main(): Promise<void> {
   const runId = randomUUID() as PluginOperationRunId
@@ -25,14 +27,17 @@ async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
   const projectDir = process.argv[3] as string
   installOfficeEngineResolution(runtimeDir)
-  const installAnchor = join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh', 'package.json')
+  const installAnchor = join(runtimeDir, 'package.json')
   const profile = loadProfileDirectory('dsh', projectDir, installAnchor)
   reportSkippedBundles('dsh', profile)
   const application = runProfile({
     environment: loadLayeredEnv('dsh'),
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
-    patchFiles: [],
+    defaultPatches: process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit'
+      ? [{ id: 'agent-default-model', config: { provider: 'indus-orbit', model: 'io/harness-primary' } }]
+      : [],
+    patchFiles: process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit' ? [fileURLToPath(new URL('../indus-orbit.patch.yml', import.meta.url))] : [],
     args: ['--no-open', '--host', '127.0.0.1', '--port', '0'],
     ...(process.argv[5] === undefined ? {} : {
       packageManager: {
@@ -136,7 +141,7 @@ async function main(): Promise<void> {
     source: process.argv[4] ?? join(runtimeDir, '..', 'runtime', 'primary-runtime'),
     root: join(resolveDshHome(), 'dsh-runtimes', 'dsh-primary-runtime'),
   })
-  installPlatformSessionPublisher(ctx, (session) => {
+  if (process.env.DSH_CLIENT_BUILD_PROFILE !== 'indus-orbit') installPlatformSessionPublisher(ctx, (session) => {
     if (process.connected) process.send?.({ type: 'platform-session', session })
   })
   const url = ctx.connection.authenticatedUrl(`${ctx.webServer.protocol}//127.0.0.1:${String(ctx.webServer.port)}`)

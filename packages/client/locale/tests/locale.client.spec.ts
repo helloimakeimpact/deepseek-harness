@@ -4,6 +4,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { stubConfigForm, type StubConfigForm } from '@deepseek-ai/dsh-client-test-runtime'
 import type { LocaleSettings, LocaleSnapshot } from '@deepseek-ai/dsh-client-locale/client'
 import { zh, en, ja } from '../src/locales/settings.ts'
+import { hi } from '../src/locales/hi.ts'
 import { FALLBACK_LOCALE, LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 const make = (host?: StubConfigForm<LocaleSettings>): {
   ctx: Context
@@ -235,6 +236,22 @@ describe('LocaleRuntime', () => {
     svc.register('ns', 'ja', { hello: 'こんにちは' })
     expect(svc.getLocale().revision).toBe(revision + 1)
     expect(svc.bind('ns')('hello')).toBe('こんにちは')
+  })
+
+  it('selects Hindi, saves the preference, and falls back to English for untranslated features', () => {
+    const host = stubConfigForm<LocaleSettings>()
+    const { svc } = make(host)
+    svc.addLanguage({ id: 'hi', label: 'हिन्दी', fallback: 'en' })
+    svc.register('common', 'hi', hi)
+    svc.register('feature', 'hi', { greeting: 'नमस्ते' })
+    svc.register('feature', 'en', { greeting: 'Hello', pending: 'English fallback' })
+    svc.setLocale('hi')
+
+    expect(svc.getLocale().locales).toContainEqual({ id: 'hi', label: 'हिन्दी', fallback: 'en' })
+    expect(host.set).toHaveBeenCalledWith('preference', 'hi')
+    expect(svc.bind('feature')('greeting')).toBe('नमस्ते')
+    expect(svc.bind('feature')('pending')).toBe('English fallback')
+    expect(svc.bind('feature')('cancel')).toBe('रद्द करें')
   })
 
   it('rejects duplicate and malformed locale definitions', () => {

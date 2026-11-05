@@ -3,7 +3,8 @@ import { build } from 'vite'
 import { fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { repositoryClientBuildEnvironment, resolveClientBuildEnvironment } from '../../scripts/client-build-environment.ts'
+import { clientBuildEnvironmentDefines } from '../../scripts/client-build-environment.ts'
+import { desktopClientBuildEnvironment } from './scripts/client-build-environment.ts'
 import { packagedImportsPlugin } from './scripts/desktop-bundle-imports.mjs'
 
 // This config runs after the workspace tsdown pass, not inside it: the main bundle inlines
@@ -23,14 +24,17 @@ const preloadImports = { packages: new Set(['electron', 'events', 'timers', 'url
 const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
 /** Use the client environment this build already received, otherwise the repository's own version and commit. */
-const clientEnvironment = resolveClientBuildEnvironment(process.env.DSH_CLIENT_VERSION === undefined
-  ? repositoryClientBuildEnvironment(REPOSITORY_ROOT, process.env)
-  : process.env)
+const clientEnvironment = desktopClientBuildEnvironment(REPOSITORY_ROOT, process.env)
 const clientVersion = clientEnvironment.DSH_CLIENT_VERSION
 if (clientVersion === undefined) throw new Error('desktop build: the client environment carries no DSH_CLIENT_VERSION')
 
-/** Inline the one public build value the Node entry reads; every other variable stays a runtime lookup. */
-const clientVersionDefine = { 'process.env.DSH_CLIENT_VERSION': JSON.stringify(clientVersion) }
+/** Fix native product selection into the artifact; runtime environment cannot rebrand an installed app. */
+const clientVersionDefine = {
+  'process.env.DSH_CLIENT_VERSION': JSON.stringify(clientVersion),
+  'process.env.DSH_CLIENT_BUILD_PROFILE': JSON.stringify(clientEnvironment.DSH_CLIENT_BUILD_PROFILE) ?? 'undefined',
+  'process.env.DSH_CLIENT_INDUS_OAUTH_CLIENT_ID': JSON.stringify(clientEnvironment.DSH_CLIENT_INDUS_OAUTH_CLIENT_ID) ?? 'undefined',
+  'process.env.DSH_CLIENT_INDUS_OAUTH_CALLBACK_PORT': JSON.stringify(clientEnvironment.DSH_CLIENT_INDUS_OAUTH_CALLBACK_PORT) ?? 'undefined',
+}
 
 export default defineConfig([
   {
@@ -73,7 +77,7 @@ export default defineConfig([
         }],
         root: fileURLToPath(new URL('.', import.meta.url)),
         esbuild: { jsx: 'automatic' },
-        define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+        define: { ...clientBuildEnvironmentDefines(clientEnvironment), 'process.env.NODE_ENV': JSON.stringify('production') },
         build: {
           outDir: 'lib/welcome',
           emptyOutDir: true,
@@ -96,7 +100,7 @@ export default defineConfig([
     clean: false,
     deps: { neverBundle: ['electron'] },
   },
-  ...(['preload-app', 'preload-welcome', 'preload-platform-account', 'preload-mandatory', 'preload-update-dialog'] as const).map(name => ({
+  ...(['preload-app', 'preload-welcome', 'preload-indus-auth', 'preload-platform-account', 'preload-mandatory', 'preload-update-dialog'] as const).map(name => ({
     // Sandboxed Electron preloads run as CommonJS even though the application package is ESM.
     entry: { [name]: `lib/types/${name}.js` },
     plugins: [packagedImportsPlugin(preloadImports)],

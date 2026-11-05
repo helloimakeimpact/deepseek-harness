@@ -33,7 +33,7 @@ import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-vi
 import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
-import { DesktopBackendController } from './backend-controller.ts'
+import { DesktopBackendController, stopDesktopRuntime } from './backend-controller.ts'
 import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } from './ipc.ts'
 import { readDeviceInfo } from './device-info.ts'
 import { desktopUpdateReadyConfirmation, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
@@ -70,6 +70,17 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
+import { requireIndusIdentity } from './indus-auth-window.ts'
+import { indusAuthCopy } from './indus-auth-copy.ts'
+import { IndusModelBroker } from './indus-model-broker.ts'
+import { desktopProduct } from './product.ts'
+
+const product = desktopProduct()
+if (product.profile === 'indus-orbit') {
+  app.setName(product.nativeName)
+  if (app.isPackaged) app.setPath('userData', join(app.getPath('appData'), product.userDataDirectoryName))
+  process.env.DSH_HOME ??= join(app.getPath('appData'), product.homeDirectoryName, 'harness')
+}
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => { await stopOperationReports() }
@@ -369,6 +380,10 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 }
 
 async function main(): Promise<void> {
+  const indusIdentity = product.profile === 'official' ? undefined : await requireIndusIdentity({
+    stop: () => stopForRecovery(),
+    lost: () => { quitWithoutConfirmation(); return Promise.resolve() },
+  })
   const desktopSettings = await readDesktopSettings(app.getPath('userData'))
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.DSH_DESKTOP_UPDATE_JOURNAL_DIR
@@ -522,18 +537,28 @@ async function main(): Promise<void> {
     () => locale.id === 'zh-CN' ? 'zh_CN' : 'en_US', process.platform === 'win32' ? 'win32' : 'darwin',
     owner => isMandatory() || updateOverlays.input(owner).blocked)
   const backend = new DesktopBackendController((onFailure) => {
+    const modelBroker = indusIdentity === undefined ? undefined : new IndusModelBroker(
+      (path, body, signal, requestId) => indusIdentity.fetchModel(path, body, signal, requestId),
+      { requestBytes: 1024 * 1024, responseBytes: 16 * 1024 * 1024, concurrentRequests: 4, requestTimeoutMs: 180_000 },
+    )
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
-      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
+      hostInspectPort, {
+        ...hostEnvironment,
+        DSH_CLIENT_VERSION: desktopClientVersion(),
+        DSH_CLIENT_BUILD_PROFILE: process.env.DSH_CLIENT_BUILD_PROFILE,
+      }, onFailure,
       primaryRuntime,
       resources, (next) => { platformView.setSession(next) }, (record) => {
         operationJournal ??= new OperationJournal(join(app.getPath('userData'), 'plugin-operations'), {
           segmentBytes: 256 * 1024, recordBytes: 4096, queuedBytes: 64 * 1024,
         })
         operationJournal.enqueue(JSON.stringify(record))
-      })
+      },
+      modelBroker === undefined ? undefined : () => modelBroker.start())
     return {
       start: async () => {
+        if (indusIdentity !== undefined && indusIdentity.state !== 'signed-in') throw new Error('Indus Orbit sign-in is required')
         const ready = await host.start()
         const cookie = await authenticateWebHost(ready.url)
         hostCookie = cookie
@@ -542,6 +567,7 @@ async function main(): Promise<void> {
           .catch((error: unknown) => { console.error('desktop: legacy Host cookie cleanup failed', error) })
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
+        if (indusIdentity !== undefined) return
         welcomeBackend = connectDesktopWelcome(ready.url, cookie)
         analyticsEnabled = await welcomeBackend.analyticsEnabled().catch(() => false)
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
@@ -587,12 +613,14 @@ async function main(): Promise<void> {
       stop: async () => {
         analyticsEnabled = false
         stopAccount?.()
-        try { await host.stop(requireCleanStop) }
-        catch (error) {
-          if (!requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
-          // Backend cleanup succeeded; installation still rejects the unsuccessful task teardown.
-          updateStopFailure = error
-        }
+        await stopDesktopRuntime(async () => { await modelBroker?.close() }, async () => {
+          try { await host.stop(requireCleanStop) }
+          catch (error) {
+            if (!requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
+            // Backend cleanup succeeded; installation still rejects the unsuccessful task teardown.
+            updateStopFailure = error
+          }
+        })
       },
       updateTasks: (action: 'inspect' | 'lock' | 'unlock') => host.updateTasks(action),
       inspectQuit: () => host.inspectQuit(),
@@ -658,6 +686,7 @@ async function main(): Promise<void> {
   }
 
   const readWelcomeState = async () => {
+    if (indusIdentity !== undefined) return { loggedIn: indusIdentity.state === 'signed-in', hasApiKey: false, localePreference: null }
     if (backend.host === undefined || welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
     return welcomeBackend.read()
   }
@@ -773,7 +802,7 @@ async function main(): Promise<void> {
     // A confirmation on a hidden window would go unseen, so it waits for the next show; the mandatory
     // flow keeps its own taskbar and Dock attention instead.
     if (!isMandatory()) await windowShown()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- A quit can begin while the show is awaited.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Quitting can change while the window is hidden.
     if (quitting) return state
     return updates.install(version, revision)
   }
@@ -859,6 +888,7 @@ async function main(): Promise<void> {
   })
   ipcMain.handle(PLATFORM_IPC.open, (event, page: unknown, bounds: unknown) => {
     const owner = assertMainApplication(event)
+    if (indusIdentity !== undefined) throw new Error('Upstream account panels are unavailable in I/O Harness')
     if (page !== 'usage' && page !== 'top-up') throw new Error('Invalid Platform page')
     return platformView.open(owner, page, platformBounds(bounds))
   })
@@ -877,6 +907,7 @@ async function main(): Promise<void> {
       || new URL(event.senderFrame.url).origin !== new URL(applicationUrl).origin) {
       throw new Error('desktop welcome: rejected locale request from an unowned frame')
     }
+    if (indusIdentity !== undefined) return { languages: systemLanguages, preference: null }
     if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
     return { languages: systemLanguages, preference: await welcomeBackend.readLocalePreference() }
   })
@@ -1001,6 +1032,11 @@ async function main(): Promise<void> {
     }
     let failedOperation: 'check' | 'download' | 'install' = 'check'
     promptOperation ??= Promise.resolve().then(async () => {
+      if (product.profile === 'indus-orbit') {
+        await ordinaryMessageBox({ type: 'info', title: locale.messages.updateCheckTitle,
+          message: locale.messages.updateUnavailable, buttons: [locale.messages.updateAcknowledge] })
+        return
+      }
       if (manual) updateJournal?.action('check-requested')
       const joinedPolicyAuthentication = authenticationOperation !== undefined
       if (joinedPolicyAuthentication) await authenticatePolicy()
@@ -1127,10 +1163,10 @@ async function main(): Promise<void> {
     updates.dispose()
   })
 
-  const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
+  const applicationIconPath = development ? join(app.getAppPath(), 'resources', product.profile === 'official' ? 'icon-windows.png' : 'io-harness-mark.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'DeepSeek Harness',
+    applicationName: product.displayName,
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',
@@ -1150,6 +1186,8 @@ async function main(): Promise<void> {
       { role: 'unhide', label: currentDesktopLocale().messages.showAllApplications }, { type: 'separator' }]
     : []
   const applicationItems = (): MenuItemConstructorOptions[] => [
+    ...indusIdentity === undefined ? [] : [{ label: indusAuthCopy(app.getLocale()).credits, click: () => { void shell.openExternal('https://indusorbit.com/io?view=overview').catch((error: unknown) => { reportFatal(error, 'main') }) } }],
+    ...indusIdentity === undefined ? [] : [{ label: indusAuthCopy(app.getLocale()).signOut, click: () => { void indusIdentity.signOut().catch((error: unknown) => { reportFatal(error, 'main') }) } }],
     // Windows has no system About panel; Electron's fallback is a plain
     // message box, so the shell shows its own dimmed dialog instead.
     process.platform === 'win32'
@@ -1158,7 +1196,7 @@ async function main(): Promise<void> {
       : { label: currentDesktopLocale().messages.aboutMenu, role: 'about' },
     { type: 'separator' },
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
-    ...process.platform === 'darwin' || process.platform === 'win32'
+    ...product.profile === 'official' && (process.platform === 'darwin' || process.platform === 'win32')
       ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
     { type: 'separator' },
     ...development ? [
@@ -1183,13 +1221,15 @@ async function main(): Promise<void> {
   const refreshApplicationMenu = (): void => {
     Menu.setApplicationMenu(Menu.buildFromTemplate(process.platform === 'win32'
       ? windowsDevToolsShortcuts : [{
-        label: darwin ? app.name : currentDesktopLocale().messages.application,
+        label: darwin ? product.displayName : currentDesktopLocale().messages.application,
         submenu: [...applicationItems(), devToolsF12Shortcut],
       }, ...platformMenus()]))
     tray?.relabel()
   }
   refreshApplicationMenu()
-  const trayIconPath = development ? join(app.getAppPath(), 'resources', 'tray-windows.ico') : join(process.resourcesPath, 'tray.ico')
+  const trayIconPath = development
+    ? join(app.getAppPath(), 'resources', product.profile === 'official' ? 'tray-windows.ico' : 'io-harness-mark.png')
+    : join(process.resourcesPath, product.profile === 'official' ? 'tray.ico' : 'tray.png')
   if (process.platform === 'win32') {
     // The tray is the way back to a hidden window; without it, relaunching the application still focuses it.
     try {
@@ -1340,6 +1380,7 @@ async function main(): Promise<void> {
   }
   let openingWelcome: Promise<void> | undefined
   const showWelcome = (): Promise<void> => {
+    if (indusIdentity !== undefined) return Promise.reject(new Error('Indus Orbit sign-in is required; restart I/O Harness'))
     if (quitting) return Promise.resolve()
     if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) {
       if (!welcomeWindow.isVisible()) void track('auth_page_view', {})
@@ -1432,10 +1473,10 @@ async function main(): Promise<void> {
     window.focus()
   }
 
-  if (app.isPackaged || process.env.DSH_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('dsh')
+  if (app.isPackaged || process.env.DSH_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient(product.protocol)
   app.on('open-url', (event, url) => {
     event.preventDefault()
-    if (url === 'dsh://open' || url === 'dsh://open/') focusPrimaryWindow()
+    if (url === `${product.protocol}://open` || url === `${product.protocol}://open/`) focusPrimaryWindow()
   })
 
   app.on('activate', (_event, hasVisibleWindows) => {
@@ -1495,10 +1536,10 @@ async function main(): Promise<void> {
   mainWindow = createMainWindow()
   if (typeof manifest !== 'object' || manifest === null) throw new Error('desktop policy: invalid application manifest')
   const developmentPolicy = app.isPackaged ? undefined : process.env.DSH_DESKTOP_MANDATORY_UPDATE_CONFIG
-  const policyInput: unknown = app.isPackaged
+  const policyInput: unknown = product.profile === 'indus-orbit' ? undefined : app.isPackaged
     ? ('dshMandatoryUpdatePolicy' in manifest ? manifest.dshMandatoryUpdatePolicy : undefined)
     : developmentPolicy === undefined ? undefined : JSON.parse(developmentPolicy) as unknown
-  const policyConfig = resolveDesktopPolicyConfig(policyInput, !app.isPackaged)
+  const policyConfig = resolveDesktopPolicyConfig(policyInput, !app.isPackaged || product.profile === 'indus-orbit')
   if (policyConfig !== undefined) {
     if (policyConfig.authentication === 'feishu-test') {
       policyAuth = new DesktopPolicyTestAuth(policyConfig.origin, policyConfig.allowedAuthOrigins, locale,

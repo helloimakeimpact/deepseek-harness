@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "state": "Verified",
+  "productionState": "Partial",
+  "sourceParent": "eea69df2b6ffe74d907ac72089b3f0d3757aa584",
+  "scope": "Fresh unsigned macOS arm64 preparation and unpacked application rehearsal; no public installer, signing/notarization or real I/O credit use.",
+  "initialPreparedTreeRejection": {
+    "package": "@modelcontextprotocol/client",
+    "observedVersion": "2.2.0",
+    "reviewedVersion": "2.3.0"
+  },
+  "runtime": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "packages": 560,
+    "registryAudit": {
+      "command": "pnpm audit --prod --audit-level=info",
+      "completedAt": "2026-10-29T10:56:50.362Z",
+      "lockFile": "dependency-lock.yaml",
+      "lockSha256": "d9ce5333796276a858ea648fec4868b075a210a4e051b3021fc276023a330d56"
+    },
+    "inventorySha256": "bab022c47d985f15a5667a96e8c7ccd9f0302e74154e5228613d9a7ff7b45f74",
+    "descriptorSha256": "60c0c20653d5dccbe0ee6dc363e2e66dd78567d8e60894e83c8cd2bb76ec37ee",
+    "mcpClientVersions": [
+      "2.3.0"
+    ]
+  },
+  "sourceBuild": {
+    "passed": 9,
+    "failed": 0,
+    "durationSeconds": 86.66,
+    "profile": "indus-orbit"
+  },
+  "regressions": {
+    "packagingAndHostFiles": 5,
+    "passed": 61,
+    "failed": 0,
+    "concurrentIndependentBrokerCasesPassed": 3,
+    "workflowCasesPassed": 80,
+    "workflowAndReferenceCasesPassed": 105
+  },
+  "realPreparationAndPackagedChecks": [
+    "all-severity independent production npm audit",
+    "unchanged audited lock and 560 final physical package manifests",
+    "Python/Office versions, dependency completeness and document round trips",
+    "native koffi/sharp/html/pty/pnpm/grep/glob probes",
+    "offline CLI plugin install and removal",
+    "private unfunded I/O Host handshake; inference attempts reject qualification",
+    "frontend and external plugin HTTP routes",
+    "runtime plugin installation",
+    "DOCX/XLSX/PPTX to PDF and Office skill CLI discovery",
+    "runtime integrity before/after smoke and post-ASAR payload verification"
+  ],
+  "privateMacApplication": {
+    "path": "apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/mac-arm64/IO Harness.app",
+    "asarSha256": "abc7060c23ae95a28c83d9d0eae312d95aa73658123937cdb9a38e669d78e9b3",
+    "signedForDistribution": false,
+    "notarized": false,
+    "published": false,
+    "sourceDirty": true,
+    "guiState": "Repaired sign-in labels and superscript I/O artwork observed. Owner screenshot at 16:49 confirms authenticated workspace startup; main workspace mark awaits the next full runtime package."
+  },
+  "funding": {
+    "realProviderCalls": 0,
+    "realAccountUsed": false,
+    "workspaceGrant": false,
+    "customerCharge": false
+  },
+  "forkCi": {
+    "state": "Verified selector tests; remote execution pending publication",
+    "repository": "helloimakeimpact/deepseek-harness",
+    "defaultLinuxRunner": "ubuntu-24.04",
+    "defaultWindowsRunner": "windows-2025",
+    "coverageWorkers": 2,
+    "coveragePartitions": 1,
+    "coverageGateConcurrency": 1,
+    "coverageTimeoutMs": 90000,
+    "requiredChecksAndReadOnlyPermissionsPreserved": true,
+    "upstreamDefaultsAndExplicitFailoverPreserved": true
+  },
+  "remaining": [
+    "Mac Intel and Windows x64 native/installer qualification",
+    "Exact Electron main application and primary Python/native supply-chain audit",
+    "Owned signing/notarization, publication and update/recovery configuration",
+    "Genuine hosted workspace credit, expiry/revocation, receipts/invoice and cache acceptance",
+    "Working browser execution and genuine pairing",
+    "Full remote fork CI results"
+  ],
+  "branding": "Wider branding draft remains frozen. Owner-requested Harness-only [H] mark uses the actual I/O artwork in the upper right; native identity names and legacy data paths stay stable.",
+  "originalAccountDataTouched": false,
+  "providerCredentialsIncluded": false,
+  "documentation": {
+    "fullChecksPassed": 43,
+    "failed": 0,
+    "durationSeconds": 1304.76
+  },
+  "startupRepair": {
+    "originalFailure": "The package omitted lib/preload-indus-auth.cjs, leaving the native sign-in page without labels or controls.",
+    "negativeControl": "Existing package preloads test fails before adding the omitted file.",
+    "repair": "Package the sign-in preload, initialize labels before IPC, disable actions on state-read failure, and report preload failure natively.",
+    "packageFileChecks": [
+      "official Mac arm64",
+      "Indus Mac arm64",
+      "Indus Mac x64",
+      "Indus Windows x64"
+    ],
+    "focusedCasesPassed": 32,
+    "welcomeCasesPassed": 30,
+    "desktopSourceBuild": "Passed",
+    "repack": "Unsigned macOS arm64 directory package passed with post-ASAR checks; registry collector fell back to manual traversal after sandbox SQLite errors.",
+    "directBuildProfileRepair": "Preserve the named profile selector through repository metadata resolution; configured artifact embeds registered public OAuth client.",
+    "buildProfileCasesPassed": 3,
+    "brandSlotCasesPassed": 8
+  },
+  "latestValidation": {
+    "focusedSignInAndPackageCasesPassed": 32,
+    "welcomeCasesPassed": 30,
+    "directBuildProfileCasesPassed": 3,
+    "brandSlotCasesPassed": 8,
+    "quickDocChecksPassed": 21,
+    "fullDocumentation": "Incomplete: TypeScript passed, website build hit ENOSPC; cancelled continuation.",
+    "fullLint": "Incomplete: full-repository worker stopped after sustained swapping and free disk fell to 310 MiB. All 25 changed files passed type-aware lint; no full aggregate pass is claimed.",
+    "prePushTypecheck": {
+      "passed": 5,
+      "failed": 0,
+      "durationSeconds": 10.3
+    },
+    "changedSourceLint": "Passed: all 25 changed source files, type-aware rules unchanged.",
+    "fullGui": {
+      "files": 652,
+      "passed": 10902,
+      "failed": 1,
+      "skipped": 1,
+      "failure": "Unchanged settings locale-thunk case exceeded its original 5000ms timeout.",
+      "isolatedSameFilePassed": 11,
+      "timeoutOrAssertionsChanged": false
+    },
+    "quickDocDurationSeconds": 140.15
+  },
+  "hostedBackend": {
+    "project": "jpwvgpnbkrktipwhvqss",
+    "function": "io-harness",
+    "version": 1,
+    "state": "Approved backend deployed; production web console released; owner connection approved; Telnyx technical evidence recorded; public routing still commercially gated.",
+    "fundingConnections": 1,
+    "routableConnections": 0,
+    "providerCalls": 0,
+    "workspaceCapacityGrants": 0,
+    "productionConsoleCommit": "9bdccf585b04ef6b4d9b92812790dfdfcca8efdc",
+    "providerRegistry": "Telnyx hidden/conformance, capability verified, price draft, routing disabled; member role unchanged.",
+    "activationRehearsal": "Rolled back at existing written-resale gate; no capacity grant, budget, credit, invoice or workspace charge committed. Owner chose private API testing for now."
+  },
+  "privateTelnyxRecheck": {
+    "date": "2026-10-29",
+    "provider": "telnyx",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+    "attempts": 2,
+    "cases": [
+      {
+        "kind": "text",
+        "finish": "stop",
+        "usage": {
+          "inputTokens": 11,
+          "outputTokens": 2,
+          "totalTokens": 13
+        }
+      },
+      {
+        "kind": "tool",
+        "finish": "tool-calls",
+        "usage": {
+          "inputTokens": 273,
+          "outputTokens": 37,
+          "totalTokens": 310
+        }
+      }
+    ],
+    "estimatedInvocationCeilingUsd": 0.01,
+    "invoiceCostVerified": false,
+    "scope": "Native pi-ai adapter and private loopback broker to direct Telnyx. Synthetic gateway metadata; no hosted I/O grant, workspace charge or route activation.",
+    "retainsCredentialsPromptsOrGeneratedText": false
+  }
+}

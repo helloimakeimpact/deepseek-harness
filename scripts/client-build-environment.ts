@@ -22,6 +22,14 @@ const OFFICIAL_CLIENT_BUILD_ENVIRONMENT = {
   DSH_CLIENT_TITLE: 'DeepSeek Harness',
 } as const
 
+/** Registered public identity of the Indus Orbit Harness fork. */
+const INDUS_ORBIT_CLIENT_BUILD_ENVIRONMENT = {
+  DSH_CLIENT_BUILD_PROFILE: 'indus-orbit',
+  DSH_CLIENT_TITLE: 'I/O Harness — Indus Orbit',
+  DSH_CLIENT_INDUS_OAUTH_CLIENT_ID: 'cf26c996-8c19-42c6-82ff-f0b6ccafd3ee',
+  DSH_CLIENT_INDUS_OAUTH_CALLBACK_PORT: '43189',
+} as const
+
 /** Public variable carrying the source commit embedded in client artifacts. */
 const CLIENT_COMMIT_HASH_VARIABLE = 'DSH_CLIENT_COMMIT_HASH'
 
@@ -34,6 +42,8 @@ export const CLIENT_BUILD_RECORD_PATH = '.dsh-build/client-build-environment.jso
 const CLIENT_BUILD_RECORD_FORMAT = 1
 const CLIENT_ARTIFACT_PATTERNS = [
   'apps/web/dist/**/*',
+  'apps/desktop/lib/main.js',
+  'apps/desktop/lib/welcome/**/*',
   'packages/*/*/lib/client.js',
   'packages/*/*/lib/client.js.map',
   'packages/*/*/lib/client.*.js',
@@ -192,7 +202,7 @@ export function resolveClientBuildEnvironment(
   profile: string | undefined = environment[CLIENT_BUILD_PROFILE_SELECTOR],
 ): ClientBuildEnvironment {
   if (profile === undefined) return clientBuildEnvironment(environment)
-  if (profile === 'official' || profile === 'local') {
+  if (profile === 'official' || profile === 'local' || profile === 'indus-orbit') {
     const commitHash = environment[CLIENT_COMMIT_HASH_VARIABLE]
     const version = environment[CLIENT_VERSION_VARIABLE]
     if (commitHash === undefined) {
@@ -204,13 +214,13 @@ export function resolveClientBuildEnvironment(
     return {
       DSH_CLIENT_COMMIT_HASH: commitHash,
       DSH_CLIENT_VERSION: version,
-      ...(profile === 'official' ? OFFICIAL_CLIENT_BUILD_ENVIRONMENT : {
+      ...(profile === 'official' ? OFFICIAL_CLIENT_BUILD_ENVIRONMENT : profile === 'indus-orbit' ? INDUS_ORBIT_CLIENT_BUILD_ENVIRONMENT : {
         DSH_CLIENT_BUILD_PROFILE: 'local',
         ...(environment.DSH_CLIENT_GIT_DIRTY === 'true' ? { DSH_CLIENT_GIT_DIRTY: 'true' } : {}),
       }),
     }
   }
-  throw new Error(`unknown client build profile ${JSON.stringify(profile)}; expected "official" or "local"`)
+  throw new Error(`unknown client build profile ${JSON.stringify(profile)}; expected "official", "local", or "indus-orbit"`)
 }
 
 /**

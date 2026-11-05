@@ -13,6 +13,7 @@ import { globSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
   officialClientBuildEnvironment,
+  resolveClientBuildEnvironment,
   readClientBuildRecord,
 } from '../client-build-environment.ts'
 import { validateTarballPayload } from '../publication-payload.ts'
@@ -112,8 +113,9 @@ export abstract class ReleaseFamily {
    * Assert that built artifacts match this release family's required profile.
    * Families without environment-selected artifacts accept every build tree.
    * @param _root - repository root containing generated artifacts.
+   * @param _clientProfile - explicit named client profile for local Desktop preview packing; omitted means official.
    */
-  verifyBuildArtifacts(_root: string): void {}
+  verifyBuildArtifacts(_root: string, _clientProfile?: string): void {}
 
   /**
    * Discover this family's members.
@@ -353,9 +355,9 @@ class DshFamily extends ReleaseFamily {
   ] as const
   readonly tagPrefix = 'dsh-v'
 
-  /** Require current artifacts from a complete official client build. */
-  override verifyBuildArtifacts(root: string): void {
-    readClientBuildRecord(root, officialClientBuildEnvironment(root))
+  /** Require current artifacts from the selected named client build; releases default to official. */
+  override verifyBuildArtifacts(root: string, clientProfile = 'official'): void {
+    readClientBuildRecord(root, resolveClientBuildEnvironment(officialClientBuildEnvironment(root), clientProfile))
   }
 
   /**

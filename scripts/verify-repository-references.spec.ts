@@ -142,6 +142,63 @@ describe('maintained repository reference policy', () => {
     }
   })
 
+  for (const file of [
+    'docs/indus-orbit-local-verification-2026-10-22.json',
+    'docs/indus-orbit-workstation-verification-2026-10-27.json',
+    'docs/indus-orbit-terminal-distribution.proposal.json',
+  ]) {
+    it(`validates source-revision data and rejects prose through the repository scanner for ${file}`, (test) => {
+      const subject = repository(test)
+      const document = file.endsWith('proposal.json') ? { upstream: { commit: subject.commit } } : { sourceBase: subject.commit }
+      subject.write(file, JSON.stringify(document, null, 2))
+      expect(scanRepositoryReferences(subject.root)).toEqual([])
+      subject.write(file, JSON.stringify({ ...document, note: subject.commit }, null, 2))
+      expect(scanRepositoryReferences(subject.root)).toEqual([{ file, line: file.endsWith('proposal.json') ? 5 : 3, kind: 'commit-hash' }])
+    })
+  }
+
+  it('classifies exact JSON source-revision fields while retaining prose and unrelated-field checks', () => {
+    const commit = '0123456789abcdef0123456789abcdef01234567'
+    const commits = new Set([commit])
+    const receipt = 'docs/indus-orbit-workstation-verification-2026-10-27.json'
+    const source = JSON.stringify({ sourceBase: commit, note: commit }, null, 2)
+    expect(findRepositoryReferences(receipt, source, commits)).toEqual([{ file: receipt, line: 3, kind: 'commit-hash' }])
+    expect(findRepositoryReferences('docs/another-record.json', source, commits)).toHaveLength(2)
+    expect(findRepositoryReferences(receipt, `sourceBase: ${commit}`, commits)).toHaveLength(1)
+    expect(findRepositoryReferences(receipt, JSON.stringify({ sourceBase: commit.slice(0, 12) }, null, 2), new Set([commit.slice(0, 12)])))
+      .toHaveLength(1)
+    const proposal = 'docs/indus-orbit-terminal-distribution.proposal.json'
+    expect(findRepositoryReferences(proposal, JSON.stringify({ upstream: { commit } }, null, 2), commits)).toEqual([])
+    expect(findRepositoryReferences(proposal, JSON.stringify({ commit }, null, 2), commits)).toHaveLength(1)
+    expect(findRepositoryReferences(receipt, JSON.stringify({ sourceBase: commit, note: organizationUrl }, null, 2), commits))
+      .toEqual([{ file: receipt, line: 3, kind: 'organization-url' }])
+  })
+
+  it('does not exempt repeated evidence fields nested elsewhere in a receipt', () => {
+    const commit = '0123456789abcdef0123456789abcdef01234567'
+    const file = 'docs/indus-orbit-workstation-verification-2026-10-27.json'
+    const source = JSON.stringify({ sourceBase: commit, nested: { sourceBase: commit } }, null, 2)
+    expect(findRepositoryReferences(file, source, new Set([commit]))).toEqual([
+      { file, line: 2, kind: 'commit-hash' },
+      { file, line: 4, kind: 'commit-hash' },
+    ])
+  })
+
+  it.each([
+    'docs/indus-orbit-security-verification-2026-10-29.json',
+    'docs/indus-orbit-runtime-qualification-2026-10-29.json',
+  ])('retains exact parent evidence only in the declared receipt field: %s', (file) => {
+    const commit = '0123456789abcdef0123456789abcdef01234567'
+    const commits = new Set([commit])
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceParent: commit }, null, 2), commits)).toEqual([])
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceParent: commit, note: commit }, null, 2), commits))
+      .toEqual([{ file, line: 3, kind: 'commit-hash' }])
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceBase: commit }, null, 2), commits)).toHaveLength(1)
+    expect(findRepositoryReferences(file, JSON.stringify({ sourceParent: commit.slice(0, 12) }, null, 2), new Set([commit.slice(0, 12)])))
+      .toHaveLength(1)
+    expect(findRepositoryReferences('docs/unrelated.json', JSON.stringify({ sourceParent: commit }, null, 2), commits)).toHaveLength(1)
+  })
+
   it('permits only the independent kit repository and its source URLs', () => {
     for (const suffix of ['', '.git', '/tree/main/packages/entry']) {
       expect(findRepositoryReferences('package.json', `${organizationUrl}/libreoffice-kit${suffix}`, new Set())).toEqual([])

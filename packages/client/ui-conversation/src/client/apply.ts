@@ -47,7 +47,7 @@ import { todoDockEntry } from './skeleton/TodoPanel.tsx'
 import { installStopShortcut } from './stop-shortcut.ts'
 import { TRAJECTORY_VIEW_ID, resolveActiveView } from './view-selection.ts'
 import { createViewPins } from './view-pins.ts'
-import { en, ja, es, fr, de, ru, pt, NS, zh, type ConversationKey } from './locales.ts'
+import { en, hi, ja, es, fr, de, ru, pt, NS, zh, type ConversationKey } from './locales.ts'
 import { CONVERSATION_SETTINGS_NAMESPACE, type ConversationSettings } from '../submission-settings.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -187,6 +187,9 @@ export function apply(ctx: Context, config: Config = Config({})): void {
   })
 
   ctx.effect(() => ctx.locale.register(NS, { zh, en, ja, es, fr, de, ru, pt }), 'ui-conversation: dictionaries')
+  if (process.env.DSH_CLIENT_BUILD_PROFILE === 'indus-orbit') {
+    ctx.effect(() => ctx.locale.register(NS, 'hi', hi), 'ui-conversation: Hindi dictionary')
+  }
   const t = ctx.locale.bind(NS)
   const conversationStore = createConversationStore()
   const submissionPolicy = new ComposerSubmissionPolicy(

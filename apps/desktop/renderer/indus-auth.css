@@ -1,0 +1,17 @@
+:root { color-scheme: light dark; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color: #24263f; background: #faf9f4; }
+body { margin: 0; }
+body::before { content: ""; position: fixed; width: 160px; height: 160px; right: 12px; bottom: 12px; background: url("assets/woven-portal.svg") center / contain no-repeat; opacity: .14; pointer-events: none; }
+main { position: relative; max-width: 380px; padding: 32px; margin: auto; text-align: center; }
+img { display: block; margin: auto; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.powered-by { margin: 8px 0; font-size: 12px; }
+h1 { font-size: 50px; letter-spacing: -.04em; margin: 16px 0 0; }
+p { font-size: 14px; line-height: 1.7; }
+.expansion { margin-top: 0; font-weight: 600; }
+h2 { font-size: 20px; margin-top: 36px; }
+#status { min-height: 76px; }
+button { min-height: 46px; width: 100%; border: 1px solid #24263f; border-radius: 8px; padding: 12px; margin-top: 12px; font: inherit; color: #faf9f4; background: #24263f; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+button:focus-visible { outline: 3px solid #ac672d; outline-offset: 4px; }
+#cancel { background: transparent; color: inherit; }
+@media(prefers-color-scheme:dark) { :root { color: #faf9f4; background: #24263f; } button { color: #24263f; background: #faf9f4; border-color: #faf9f4; } }

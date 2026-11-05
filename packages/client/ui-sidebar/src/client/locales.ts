@@ -17,6 +17,20 @@ export const zh = {
 /** The sidebar namespace key union. */
 export type SidebarKey = keyof typeof zh
 
+/** Hindi labels for the Indus Orbit sidebar. */
+export const hi = {
+  'panels.unpin': '{name} को अनपिन करें',
+  'panels.unpinTooltip': 'पैनल अनपिन करें',
+  'session.new': 'नया सत्र',
+  'session.new.label': 'नया सत्र',
+  'toggle.open': 'साइडबार खोलें',
+  'toggle.collapse': 'साइडबार समेटें',
+  'panels.label': 'सभी पैनल',
+  'navigation.label': 'नेविगेशन',
+  'panels.more': 'और',
+  'version.copied': 'संस्करण कॉपी किया गया',
+} satisfies Record<SidebarKey, string>
+
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
   'panels.unpinTooltip': 'Unpin from left sidebar',

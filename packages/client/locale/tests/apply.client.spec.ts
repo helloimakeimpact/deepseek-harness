@@ -66,6 +66,25 @@ function faceOf(slots: SlotRegistry) {
 }
 
 describe('locale apply', () => {
+  it('registers and persists Hindi for the Indus Orbit profile', async () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'indus-orbit')
+    const b = await bench()
+    try {
+      declareItems(b.slots)
+      await b.ctx.plugin({ inject: [...inject], apply }).await()
+      const locale = b.ctx.get('locale') as LocaleRuntime
+      locale.setLocale('hi')
+      expect(locale.getSnapshot().active).toBe('hi')
+      expect(locale.bind('common')('cancel')).toBe('रद्द करें')
+      expect(locale.bind(SETTINGS_NS)('language.title')).toBe('भाषा')
+      expect(faceOf(b.slots).instance.getSnapshot().options).toContainEqual(expect.objectContaining({ id: 'hi', label: 'हिन्दी' }))
+      await vi.waitFor(() => { expect(b.mutate).toHaveBeenCalled() })
+    } finally {
+      await b.ctx.fiber.dispose()
+      vi.unstubAllEnvs()
+    }
+  })
+
   it.each(['resolve', 'reject'] as const)('contains a late native initialization %s after unloading', async (outcome) => {
     const b = await bench()
     const ready = Promise.withResolvers<unknown>()

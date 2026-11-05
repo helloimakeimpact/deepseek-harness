@@ -76,6 +76,7 @@ export const zh = {
   'settings.enter.queue': '排队发送',
   'settings.enter.steer': '插话发送',
   'hero.headline': '探索未至之境',
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'hero.preview': '预览版',
   'hero.chooseWorkspace': '选择工作区',
   'session.hierarchy': '会话层级',
@@ -398,6 +399,29 @@ export const zh = {
 /** The conversation namespace key union. */
 export type ConversationKey = keyof typeof zh
 
+/** Initial Hindi conversation copy; unlisted keys fall back to English. */
+export const hi = {
+  'quote.remove': 'उद्धरण हटाएँ',
+  'shortcut.newline': 'नई पंक्ति',
+  'shortcut.slash': 'कमांड मेनू खोलें',
+  'shortcut.mention': 'संदर्भ मेनू खोलें',
+  'hint.plan': 'योजना बनाने के लिए अपना कार्य बताएं',
+  'placeholder.plan': 'योजना बनाने के लिए अपना कार्य बताएं',
+  'placeholder.default': 'संदेश भेजें या कार्य शुरू करें, / कमांड, @ फ़ाइलें या सत्र',
+  'placeholder.unavailable': 'सत्र उपलब्ध नहीं है',
+  'placeholder.hero': 'बताएं कि आप क्या बनाना चाहते हैं, / कमांड, @ फ़ाइलें या सत्र',
+  'placeholder.workspace': 'शुरू करने के लिए कार्यक्षेत्र चुनें',
+  'input.commands': 'फ़ाइलें जोड़ें या कमांड चलाएँ',
+  'input.file': 'फ़ाइल',
+  'input.stop': 'बनाना रोकें',
+  'input.send': 'संदेश भेजें',
+  'input.sending': 'संदेश भेजा जा रहा है',
+  'hero.headline': 'नई संभावनाओं की ओर',
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
+  'hero.preview': 'पूर्वावलोकन',
+  'hero.chooseWorkspace': 'कार्यक्षेत्र चुनें',
+} satisfies Partial<Record<ConversationKey, string>>
+
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
   'quote.remove': 'Remove quote',
@@ -467,6 +491,7 @@ export const en = {
   'settings.enter.queue': 'Queue',
   'settings.enter.steer': 'Steer',
   'hero.headline': 'Into the Unknown',
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'hero.preview': 'Preview',
   'hero.chooseWorkspace': 'Choose workspace',
   'session.hierarchy': 'Session hierarchy',
@@ -790,6 +815,7 @@ export const en = {
 
 /** Japanese copy, checked against the English keys. */
 export const ja = {
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'quote.remove': '引用を削除',
   'shortcut.newline': '改行',
   'shortcut.complementary': '補助のキュー / 実行中の指示変更を使用',
@@ -1178,6 +1204,7 @@ export const ja = {
 
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'quote.remove': 'Eliminar cotización',
   'shortcut.newline': 'Nueva linea',
   'shortcut.complementary': 'Usar la acción alternativa de poner en cola o redirigir',
@@ -1568,6 +1595,7 @@ export const es = {
 
 /** French dictionary, checked against the English keys. */
 export const fr = {
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'quote.remove': 'Supprimer le devis',
   'shortcut.newline': 'Nouvelle ligne',
   'shortcut.complementary': 'Utiliser l’action alternative de mise en attente ou de guidage',
@@ -1958,6 +1986,7 @@ export const fr = {
 
 /** German dictionary, checked against the English keys. */
 export const de = {
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'quote.remove': 'Zitat entfernen',
   'shortcut.newline': 'Neue Zeile',
   'shortcut.complementary': 'Die alternative Aktion zum Vormerken oder Lenken verwenden',
@@ -2348,6 +2377,7 @@ export const de = {
 
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'quote.remove': 'Удалить цитату',
   'shortcut.newline': 'Новая линия',
   'shortcut.complementary': 'Использовать альтернативное действие: поставить в очередь или направить',
@@ -2738,6 +2768,7 @@ export const ru = {
 
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
+  'hero.indusOrbitHeadline': 'Intelligence, built together.',
   'quote.remove': 'Remover cotação',
   'shortcut.newline': 'Nova linha',
   'shortcut.complementary': 'Usar a ação alternativa de enfileirar ou orientar',

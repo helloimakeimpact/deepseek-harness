@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest'
 
 function evaluateRunsOn(selector: unknown, context: Record<string, unknown>): unknown {
   if (typeof selector !== 'string') throw new TypeError('Runner selector must be a string')
-  return runInNewContext(selector.trim().slice(3, -2), context, { timeout: 1000 })
+  return runInNewContext(selector.trim().slice(3, -2), {
+    ...context, github: { ...(isRecord(context.github) ? context.github : {}) },
+  }, { timeout: 1000 })
 }
 
 const root = resolve(import.meta.dirname, '..')
@@ -452,7 +454,7 @@ describe('CI workflow', () => {
     }
 
     expect(windowsCoverage.name).toBe('windows node 24 / coverage')
-    expect(windowsCoverage.env).toMatchObject({ DSH_COVERAGE_PARTITIONS: "${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}" })
+    expect(windowsCoverage.env).toMatchObject({ DSH_COVERAGE_PARTITIONS: "${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '4' || '' }}" })
     const coverageSteps = windowsCoverage.steps as unknown[]
     const coverageCommands = coverageSteps.filter((step): step is Record<string, unknown> & { run: string } => (
       isRecord(step) && typeof step.run === 'string'
@@ -478,6 +480,8 @@ describe('CI workflow', () => {
     expect(nativeTestCommand).toContain('--testTimeout 90000')
     expect(nativeTestCommand).toContain('tool-pwsh/tests/loader.spec.ts')
     expect(nativeTestCommand).toContain('workflow-ptc.spec.ts')
+    expect(nativeTestCommand).toContain('sandbox-windows-acl/tests/runner.spec.ts')
+    expect(nativeTestCommand).toContain('sandbox-windows-acl/tests/diagnose-script.spec.ts')
 
     expect(windowsWorkflow.jobs['windows-observational']).toBeUndefined()
     expect(windowsBuild['continue-on-error']).not.toBe(true)
@@ -495,7 +499,7 @@ describe('CI workflow', () => {
       'timeout-minutes': 15,
       env: {
         DSH_GATE_FAIL_FAST: '',
-        DSH_PUBLINT_CONCURRENCY: "${{ vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}",
+        DSH_PUBLINT_CONCURRENCY: "${{ github.repository == 'helloimakeimpact/deepseek-harness' && '2' || vars.DSH_CI_FAILOVER_WINDOWS == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '8' || '' }}",
       },
     })
     expect(observational?.if).toBeUndefined()
@@ -1567,11 +1571,32 @@ describe('Issue lifecycle workflow', () => {
     expect(preflightStep?.run).toContain('node .github/issue-management/policy.mjs pr-preflight')
     expect(preflightStep?.if).toBeUndefined()
     expect(policyJob.if).toBeUndefined()
-    expect(validateStep?.if).toBe("${{ steps.preflight.outputs.legacy-automated != 'true' }}")
+    expect(preflightStep?.run).toContain('helloimakeimpact/deepseek-harness)')
+    expect(preflightStep?.run).toContain("printf 'policy-scope=indus-orbit\\nneeds-project=false\\n'")
+    expect(preflightStep?.run).toContain('deepseek-ai/deepseek-harness) ;;')
+    expect(preflightStep?.run).toContain('Issue policy has no trusted policy owner')
+    expect(validateStep?.if).toBe("${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.legacy-automated != 'true' }}")
+
+    // GitHub expressions permit hyphens in property names; JavaScript needs brackets.
+    const evaluatePolicyStep = (condition: unknown, context: Record<string, unknown>) => {
+      if (typeof condition !== 'string') throw new TypeError('Policy condition must be a string')
+      return evaluateRunsOn(condition.replaceAll('.needs-project', "['needs-project']").replaceAll('.legacy-automated', "['legacy-automated']"), context)
+    }
+    for (const repository of ['helloimakeimpact/deepseek-harness', 'unexpected/repository']) {
+      const context = { github: { repository }, steps: { preflight: { outputs: { 'needs-project': 'true', 'legacy-automated': 'false' } } } }
+      expect(evaluatePolicyStep(tokenStep?.if, context)).toBe(false)
+      expect(evaluatePolicyStep(validateStep?.if, context)).toBe(false)
+    }
+    const upstream = { github: { repository: 'deepseek-ai/deepseek-harness' }, steps: { preflight: { outputs: { 'needs-project': 'true', 'legacy-automated': 'false' } } } }
+    expect(evaluatePolicyStep(tokenStep?.if, upstream)).toBe(true)
+    expect(evaluatePolicyStep(validateStep?.if, upstream)).toBe(true)
+    const exempt = { github: upstream.github, steps: { preflight: { outputs: { 'needs-project': 'false', 'legacy-automated': 'true' } } } }
+    expect(evaluatePolicyStep(tokenStep?.if, exempt)).toBe(false)
+    expect(evaluatePolicyStep(validateStep?.if, exempt)).toBe(false)
 
     expect(tokenStep).toMatchObject({
       id: 'app-token',
-      if: "${{ steps.preflight.outputs.needs-project == 'true' }}",
+      if: "${{ github.repository == 'deepseek-ai/deepseek-harness' && steps.preflight.outputs.needs-project == 'true' }}",
       uses: 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1',
       with: {
         'client-id': '${{ vars.DSH_ISSUE_APP_CLIENT_ID }}',
