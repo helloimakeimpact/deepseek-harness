@@ -288,7 +288,7 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@29.1.1(@noble/hashes@2.4.0))(vite@8.2.4(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
 
   apps/cli:
@@ -1247,7 +1247,7 @@ importers:
         specifier: ^1.49.0
         version: 1.61.1
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
 
   native/system:
@@ -2342,7 +2342,7 @@ importers:
         specifier: ^7.8.5
         version: 7.8.5
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -8817,7 +8817,7 @@ importers:
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -9019,7 +9019,7 @@ importers:
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -9155,7 +9155,7 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -9685,7 +9685,7 @@ importers:
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -9883,7 +9883,7 @@ importers:
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -10048,7 +10048,7 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -10079,7 +10079,7 @@ importers:
         specifier: ^1.12.0
         version: 1.12.0
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -13606,7 +13606,7 @@ importers:
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -15104,7 +15104,7 @@ importers:
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
@@ -17504,7 +17504,7 @@ importers:
         specifier: workspace:*
         version: link:../../util/brand
       zod:
-        specifier: 4.6.6
+        specifier: ^4.6.6
         version: 4.6.6
     devDependencies:
       '@deepseek-ai/cordis':
